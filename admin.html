@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+
+<html dir="rtl" lang="he">
+<head>
+<meta charset="utf-8"/>
+<title>אישור זיכרונות</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+      body {
+        font-family: 'Assistant', sans-serif;
+      }
+    </style>
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+</head>
+<body class="bg-gray-100 text-gray-800 py-10 px-4">
+<div class="max-w-3xl mx-auto space-y-12">
+<h1 class="text-3xl font-bold text-blue-900 text-center">אישור מכתבים וזיכרונות</h1>
+<section>
+<h2 class="text-xl font-semibold text-gray-700 mb-4">ממתינים לאישור</h2>
+<div class="space-y-6" id="memoryList"></div>
+</section>
+<section>
+<h2 class="text-xl font-semibold text-gray-700 mb-4">מאושרים להצגה</h2>
+<div class="space-y-6" id="approvedList"></div>
+</section>
+<section>
+<h2 class="text-xl font-semibold text-gray-700 mb-4">תמונות ממתינות לאישור</h2>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-6" id="pendingGallery"></div>
+</section>
+<section>
+<h2 class="text-xl font-semibold text-gray-700 mt-12 mb-4">תמונות מאושרות בגלריה</h2>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-6" id="approvedGallery"></div>
+</section>
+</div>
+<script>
+      async function fetchMemories() {
+        const pendingRes = await fetch('http://localhost:3001/api/pending');
+        const approvedRes = await fetch('http://localhost:3001/api/memories');
+        const pending = await pendingRes.json();
+        const approved = await approvedRes.json();
+
+        const pendingContainer = document.getElementById('memoryList');
+        const approvedContainer = document.getElementById('approvedList');
+
+        pendingContainer.innerHTML = '';
+        approvedContainer.innerHTML = '';
+
+        pending.forEach((memory, index) => {
+          const div = document.createElement('div');
+          div.className = 'bg-white p-6 rounded-xl shadow space-y-2';
+
+          div.innerHTML = `
+            <input id="name-${index}" value="${memory.name}" class="w-full border p-2 rounded" />
+            <textarea id="message-${index}" class="w-full border p-2 rounded h-24">${memory.message}</textarea>
+            <div class="flex justify-start flex-wrap gap-3 mt-2">
+              <button onclick="approveMemory(${index})" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">אשר</button>
+              <button onclick="editMemory(${index})" class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600">ערוך</button>
+              <button onclick="deleteMemory(${index})" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">מחק</button>
+            </div>
+          `;
+          pendingContainer.appendChild(div);
+        });
+
+        approved.forEach((mem, i) => {
+          const div = document.createElement('div');
+          div.className = 'bg-white p-6 rounded-xl shadow';
+          div.innerHTML = `
+            <p class="mb-2"><strong>שם:</strong> ${mem.name}</p>
+            <p class="mb-4"><strong>זיכרון:</strong> ${mem.message}</p>
+            <button onclick="deleteApproved(${i})" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">מחק</button>
+          `;
+          approvedContainer.appendChild(div);
+        });
+      }
+
+      async function fetchGallery() {
+        const pendingRes = await fetch('http://localhost:3001/api/gallery/pending');
+        const approvedRes = await fetch('http://localhost:3001/api/gallery/approved');
+        const pending = await pendingRes.json();
+        const approved = await approvedRes.json();
+
+        const pendingGallery = document.getElementById('pendingGallery');
+        const approvedGallery = document.getElementById('approvedGallery');
+        pendingGallery.innerHTML = '';
+        approvedGallery.innerHTML = '';
+
+        pending.forEach((item, i) => {
+          const div = document.createElement('div');
+          div.className = 'bg-white rounded-xl shadow overflow-hidden';
+          div.innerHTML = `
+            <img src="http://localhost:3001/pending-gallery/${item.filename}" class="w-full h-64 object-cover" />
+            <div class="p-4">
+              <p class="mb-2">${item.caption || ''}</p>
+              <div class="flex gap-2">
+                <button onclick="approveGallery(${i})" class="bg-green-600 text-white px-3 py-1 rounded">אשר</button>
+                <button onclick="deleteGallery(${i})" class="bg-red-600 text-white px-3 py-1 rounded">מחק</button>
+              </div>
+            </div>
+          `;
+          pendingGallery.appendChild(div);
+        });
+
+        approved.forEach((item, i) => {
+          const div = document.createElement('div');
+          div.className = 'bg-white rounded-xl shadow overflow-hidden';
+          div.innerHTML = `
+            <img src="http://localhost:3001/gallery/${item.filename}" class="w-full h-64 object-cover" />
+            <div class="p-4">
+              <p class="mb-2">${item.caption || ''}</p>
+              <button onclick="deleteApprovedGallery(${i})" class="bg-red-600 text-white px-3 py-1 rounded">מחק</button>
+            </div>
+          `;
+          approvedGallery.appendChild(div);
+        });
+      }
+
+      async function approveMemory(index) {
+        const res = await fetch('http://localhost:3001/api/approve/' + index, { method: 'POST' });
+        if (res.ok) {
+          alert('הזיכרון אושר');
+          fetchMemories();
+        }
+      }
+
+      async function editMemory(index) {
+        const name = document.getElementById('name-' + index).value;
+        const message = document.getElementById('message-' + index).value;
+
+        await fetch('http://localhost:3001/api/edit/' + index, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, message })
+        });
+
+        alert('הזיכרון עודכן');
+      }
+
+      async function deleteMemory(index) {
+        if (!confirm('למחוק זיכרון זה?')) return;
+        await fetch('http://localhost:3001/api/delete/' + index, { method: 'POST' });
+        fetchMemories();
+      }
+
+      async function deleteApproved(index) {
+        if (!confirm('למחוק זיכרון מאושר זה?')) return;
+        await fetch('http://localhost:3001/api/delete-approved/' + index, { method: 'POST' });
+        fetchMemories();
+      }
+
+      async function approveGallery(index) {
+        const res = await fetch('http://localhost:3001/api/gallery/approve/' + index, { method: 'POST' });
+        if (res.ok) {
+          alert('אושר');
+          fetchGallery();
+        }
+      }
+
+      async function deleteGallery(index) {
+        if (!confirm('למחוק תמונה זו?')) return;
+        await fetch('http://localhost:3001/api/gallery/delete/' + index, { method: 'POST' });
+        fetchGallery();
+      }
+
+      async function deleteApprovedGallery(index) {
+        if (!confirm('למחוק תמונה מאושרת זו?')) return;
+        await fetch('http://localhost:3001/api/gallery/delete-approved/' + index, { method: 'POST' });
+        fetchGallery();
+      }
+
+      fetchMemories();
+      fetchGallery();
+    </script>
+<!-- כתבי אפרים Section -->
+<section class="py-16 px-6 bg-white border-t border-gray-200">
+<div class="max-w-2xl mx-auto">
+<h2 class="text-2xl md:text-3xl font-bold text-blue-900 mb-6 text-center">הוספת כתב של אפרים</h2>
+<form class="bg-gray-50 p-6 rounded-xl shadow space-y-4" id="ktavForm">
+<input class="w-full p-3 border rounded-lg" id="ktavTitle" name="title" placeholder="כותרת הכתב" required="" type="text"/>
+<textarea class="w-full p-3 border rounded-lg" id="ktavContent" name="content" placeholder="תוכן הכתב" required="" rows="6"></textarea>
+<button class="w-full bg-blue-900 text-white py-3 rounded-lg hover:bg-blue-800 transition" type="submit">שמור כתב</button>
+<p class="text-green-600 text-center mt-4 hidden" id="ktavResponse">הכתב נשמר בהצלחה</p>
+</form>
+</div>
+</section>
+<script>
+  const ktavForm = document.getElementById('ktavForm');
+  ktavForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const title = document.getElementById('ktavTitle').value;
+    const content = document.getElementById('ktavContent').value;
+
+    const res = await fetch('http://localhost:3001/api/ktavim', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, content })
+    });
+
+    if (res.ok) {
+      document.getElementById('ktavResponse').classList.remove('hidden');
+      ktavForm.reset();
+    } else {
+      alert('שגיאה בשמירת הכתב');
+    }
+  });
+</script>
+<!-- Existing submission form stays above -->
+<section class="py-10 px-6 bg-white border-t border-gray-100">
+<div class="max-w-3xl mx-auto">
+<h2 class="text-xl font-bold text-gray-800 mb-6 text-center">כתבים קיימים</h2>
+<ul class="space-y-4" id="ktavList"></ul>
+</div>
+</section>
+<script>
+async function loadKtavList(); loadMemories(); loadPendingGallery(); {
+  const res = await fetch('http://localhost:3001/api/ktavim');
+  const data = await res.json();
+  const pendingList = document.getElementById('pendingKtavList');
+  const approvedList = document.getElementById('approvedKtavList');
+  pendingList.innerHTML = '';
+  approvedList.innerHTML = '';
+
+  data.forEach((item, index) => {
+    const li = document.createElement('li');
+    li.className = "bg-white p-4 rounded shadow";
+
+    li.innerHTML = `
+      <h3 class="text-lg font-bold mb-2">${item.title}</h3>
+      <p class="mb-2 whitespace-pre-line">${item.content}</p>
+      <div class="space-x-4 flex">
+        ${!item.approved ? `<button onclick="approveKtav(${index})" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-500">אשר</button>` : ''}
+        <button onclick="deleteKtav(${index})" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-500">מחק</button>
+      </div>
+    `;
+
+    if (item.approved) {
+      approvedList.appendChild(li);
+    } else {
+      pendingList.appendChild(li);
+    }
+  });
+}
+
+async function approveKtav(index) {
+  const res = await fetch(`http://localhost:3001/api/ktavim/approve/${index}`, {
+    method: 'POST'
+  });
+  if (res.ok) {
+    loadKtavList(); loadMemories(); loadPendingGallery();;
+  } else {
+    alert("שגיאה באישור כתב");
+  }
+}
+
+async function deleteKtav(index) {
+  const res = await fetch(`http://localhost:3001/api/ktavim/${index}`, {
+    method: 'DELETE'
+  });
+  if (res.ok) {
+    loadKtavList(); loadMemories(); loadPendingGallery();;
+  } else {
+    alert("שגיאה במחיקה");
+  }
+}
+
+window.addEventListener('DOMContentLoaded', loadKtavList);
+</script>
+</body>
+</html>

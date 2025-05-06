@@ -1,0 +1,68 @@
+
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>כתבי אפרים</title>
+  <meta name="description" content="כתבים אישיים ומרגשים מאפרים יכמן, לוחם גבעתי ז״ל.">
+  <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;700&family=Varela+Round&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Assistant', sans-serif;
+      background-image: url('https://www.transparenttextures.com/patterns/white-wall.png');
+    }
+    .ktav-card {
+      background-color: #fdfdfd;
+      border-right: 5px solid #1e40af;
+    }
+  </style>
+</head>
+<body class="text-gray-800">
+
+  <header class="bg-blue-900 text-white py-6 shadow sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 flex justify-between items-center">
+      <h1 class="text-2xl font-bold">כתבי אפרים</h1>
+      <a href="index.html" class="underline text-sm">חזרה לדף הראשי</a>
+    </div>
+  </header>
+
+  <section class="py-14 px-6">
+    <div class="max-w-4xl mx-auto text-center mb-12">
+      <h2 class="text-3xl md:text-4xl font-bold text-blue-900 mb-4">כתבים אישיים של אפרים</h2>
+      <p class="text-lg text-gray-700 leading-relaxed max-w-xl mx-auto">
+        דף זה מוקדש למילותיו של אפרים – מחשבותיו, כתביו, והשקפת עולמו שנשארו איתנו לעד.
+      </p>
+    </div>
+    <div id="ktavimFullContainer" class="space-y-10 max-w-3xl mx-auto"></div>
+  </section>
+
+  <script>
+    async function loadAllKtavim() {
+      const res = await fetch('http://localhost:3001/api/ktavim');
+      const ktavim = await res.json();
+      const container = document.getElementById('ktavimFullContainer');
+      container.innerHTML = '';
+
+      if (!ktavim.length) {
+        container.innerHTML = '<p class="text-center text-gray-600">אין עדיין כתבים להצגה.</p>';
+        return;
+      }
+
+      ktavim.reverse().forEach(k => {
+        const div = document.createElement('div');
+        div.className = 'ktav-card p-6 rounded-xl shadow';
+        div.innerHTML = `
+          <h3 class="text-xl font-bold text-gray-800 mb-3">${k.title}</h3>
+          <p class="text-lg text-gray-700 leading-relaxed whitespace-pre-line">${k.content}</p>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    loadAllKtavim();
+  </script>
+
+</body>
+</html>
