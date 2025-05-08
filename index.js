@@ -4,7 +4,6 @@ const ktavimFile = path.join(__dirname, 'ktavim.json');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const fs = require('fs');
-const multer = require('multer');
 
 
 const app = express();
