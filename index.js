@@ -1,46 +1,69 @@
 const express = require('express');
 const path = require('path');
-const ktavimFile = path.join(__dirname, 'ktavim.json');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const fs = require('fs');
 
-
 const app = express();
+
+// Allow only your Vercel frontend
 const allowedOrigins = [
   'https://efraimmemorial-frontend-git-main-agentflows-projects.vercel.app'
 ];
 
-app.use(cors({
-  origin: allowedOrigins
-})); 
+app.use(cors({ origin: allowedOrigins }));
+app.use(bodyParser.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// You no longer use these folders, but if still present:
 app.use('/pending-gallery', express.static(path.join(__dirname, 'pending-gallery')));
 app.use('/gallery', express.static(path.join(__dirname, 'gallery')));
 
-
+// Multer for temp uploads
 const multer = require('multer');
 const upload = multer({ dest: 'temp_uploads/' });
 
+// Cloudinary config with validation
 const cloudinary = require('cloudinary').v2;
+
+if (
+  !process.env.CLOUDINARY_CLOUD_NAME ||
+  !process.env.CLOUDINARY_API_KEY ||
+  !process.env.CLOUDINARY_API_SECRET
+) {
+  console.error('❌ Missing Cloudinary environment variables');
+  process.exit(1);
+}
+
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
+// Gallery upload route with 5MB limit
 app.post('/api/gallery', upload.single('image'), async (req, res) => {
   try {
-    const filePath = req.file.path;
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      fs.unlinkSync(file.path); // delete oversized temp file
+      return res.status(400).json({ error: 'Image too large. Max 5MB allowed.' });
+    }
+
     const caption = req.body.caption || '';
     const uploader = req.body.uploader || 'לא ידוע';
 
-    const result = await cloudinary.uploader.upload(filePath, {
+    const result = await cloudinary.uploader.upload(file.path, {
       folder: 'efraim-gallery',
       use_filename: true
     });
 
-    fs.unlinkSync(filePath);
+    fs.unlinkSync(file.path); // delete temp file after upload
 
     const pendingPath = path.join(__dirname, 'pending-gallery.json');
     const pending = fs.existsSync(pendingPath)
@@ -55,7 +78,7 @@ app.post('/api/gallery', upload.single('image'), async (req, res) => {
     });
 
     fs.writeFileSync(pendingPath, JSON.stringify(pending, null, 2));
-    res.status(200).json({ message: 'Uploaded to Cloudinary and pending approval.' });
+    res.status(200).json({ message: 'Uploaded and pending approval.' });
 
   } catch (error) {
     console.error('Upload error:', error);
@@ -124,6 +147,27 @@ app.post('/api/ktavim/approve/:index', (req, res) => {
     res.status(404).send('Not found');
   }
 });
+
+const axios = require('axios');
+
+app.get('/api/cloudinary/usage', async (req, res) => {
+  try {
+    const result = await axios.get(
+      `https://api.cloudinary.com/v1_1/${process.env.CLOUDINARY_CLOUD_NAME}/usage`,
+      {
+        auth: {
+          username: process.env.CLOUDINARY_API_KEY,
+          password: process.env.CLOUDINARY_API_SECRET
+        }
+      }
+    );
+    res.json(result.data);
+  } catch (err) {
+    console.error('Cloudinary usage error:', err.response?.data || err.message);
+    res.status(500).json({ error: 'Failed to fetch usage' });
+  }
+});
+
 
 
 app.listen(PORT, () => {
@@ -300,3 +344,4 @@ app.delete('/api/ktavim/:index', (req, res) => {
   fs.writeFileSync(file, JSON.stringify(data, null, 2));
   res.status(200).send('Deleted');
 });
+
