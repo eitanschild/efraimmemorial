@@ -6,35 +6,58 @@ const bodyParser = require('body-parser');
 const fs = require('fs');
 const multer = require('multer');
 
+
 const app = express();
 app.use(cors()); 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/pending-gallery', express.static(path.join(__dirname, 'pending-gallery')));
 app.use('/gallery', express.static(path.join(__dirname, 'gallery')));
-// Set up multer storage
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, 'pending-gallery'));
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const ext = path.extname(file.originalname);
-    cb(null, file.fieldname + '-' + uniqueSuffix + ext);
+
+
+const multer = require('multer');
+const upload = multer({ dest: 'temp_uploads/' });
+
+const cloudinary = require('cloudinary').v2;
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+app.post('/api/gallery', upload.single('image'), async (req, res) => {
+  try {
+    const filePath = req.file.path;
+    const caption = req.body.caption || '';
+    const uploader = req.body.uploader || 'לא ידוע';
+
+    const result = await cloudinary.uploader.upload(filePath, {
+      folder: 'efraim-gallery',
+      use_filename: true
+    });
+
+    fs.unlinkSync(filePath);
+
+    const pendingPath = path.join(__dirname, 'pending-gallery.json');
+    const pending = fs.existsSync(pendingPath)
+      ? JSON.parse(fs.readFileSync(pendingPath, 'utf-8'))
+      : [];
+
+    pending.push({
+      url: result.secure_url,
+      public_id: result.public_id,
+      caption,
+      uploader
+    });
+
+    fs.writeFileSync(pendingPath, JSON.stringify(pending, null, 2));
+    res.status(200).json({ message: 'Uploaded to Cloudinary and pending approval.' });
+
+  } catch (error) {
+    console.error('Upload error:', error);
+    res.status(500).json({ error: 'Image upload failed.' });
   }
 });
-const upload = multer({ storage: storage });
 
-app.post('/api/gallery', upload.single('image'), (req, res) => {
-  const caption = req.body.caption || '';
-  const uploader = req.body.uploader || 'לא ידוע';
-  const filename = req.file.filename;
-
-  const pending = JSON.parse(fs.readFileSync(path.join(__dirname, 'pending-gallery.json')));
-  pending.push({ filename, caption, uploader });
-  fs.writeFileSync(path.join(__dirname, 'pending-gallery.json'), JSON.stringify(pending, null, 2));
-
-  res.status(200).json({ message: 'Image uploaded and pending approval' });
-});
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -162,19 +185,20 @@ app.get('/api/gallery/approved', (req, res) => {
 // Approve gallery image
 app.post('/api/gallery/approve/:index', (req, res) => {
   const index = parseInt(req.params.index);
-  const pendingList = JSON.parse(fs.readFileSync(path.join(__dirname, 'pending-gallery.json')));
-  const approvedList = JSON.parse(fs.readFileSync(path.join(__dirname, 'gallery.json')));
+  const pendingPath = path.join(__dirname, 'pending-gallery.json');
+  const approvedPath = path.join(__dirname, 'gallery.json');
+
+  const pendingList = JSON.parse(fs.readFileSync(pendingPath));
+  const approvedList = fs.existsSync(approvedPath)
+    ? JSON.parse(fs.readFileSync(approvedPath))
+    : [];
 
   if (index >= 0 && index < pendingList.length) {
     const item = pendingList.splice(index, 1)[0];
-    const oldPath = path.join(__dirname, 'pending-gallery', item.filename);
-    const newPath = path.join(__dirname, 'gallery', item.filename);
-
-    fs.renameSync(oldPath, newPath);
     approvedList.push(item);
 
-    fs.writeFileSync(path.join(__dirname, 'pending-gallery.json'), JSON.stringify(pendingList, null, 2));
-    fs.writeFileSync(path.join(__dirname, 'gallery.json'), JSON.stringify(approvedList, null, 2));
+    fs.writeFileSync(pendingPath, JSON.stringify(pendingList, null, 2));
+    fs.writeFileSync(approvedPath, JSON.stringify(approvedList, null, 2));
     res.status(200).json({ message: 'Gallery item approved' });
   } else {
     res.status(400).json({ error: 'Invalid index' });
