@@ -256,37 +256,73 @@ app.post('/api/gallery/approve/:index', (req, res) => {
   }
 });
 
-// Delete pending gallery item
-app.post('/api/gallery/delete/:index', (req, res) => {
+  //Delete Pending Gallery Item
+app.post('/api/gallery/delete/:index', async (req, res) => {
   const index = parseInt(req.params.index);
-  const pendingList = JSON.parse(fs.readFileSync(path.join(__dirname, 'pending-gallery.json')));
+  const pendingPath = path.join(__dirname, 'pending-gallery.json');
+  const pendingList = fs.existsSync(pendingPath)
+    ? JSON.parse(fs.readFileSync(pendingPath, 'utf-8'))
+    : [];
 
   if (index >= 0 && index < pendingList.length) {
     const item = pendingList.splice(index, 1)[0];
-    const filePath = path.join(__dirname, 'pending-gallery', item.filename);
-    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-    fs.writeFileSync(path.join(__dirname, 'pending-gallery.json'), JSON.stringify(pendingList, null, 2));
+
+    // Delete from Cloudinary if public_id exists
+    if (item.public_id) {
+      try {
+        await cloudinary.uploader.destroy(item.public_id);
+      } catch (err) {
+        console.error('Cloudinary delete failed (pending):', err.message);
+      }
+    }
+
+    // Delete local file if legacy item
+    if (item.filename) {
+      const filePath = path.join(__dirname, 'pending-gallery', item.filename);
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    }
+
+    fs.writeFileSync(pendingPath, JSON.stringify(pendingList, null, 2));
     res.status(200).json({ message: 'Pending gallery item deleted' });
   } else {
     res.status(400).json({ error: 'Invalid index' });
   }
 });
 
+
 // Delete approved gallery item
-app.post('/api/gallery/delete-approved/:index', (req, res) => {
+app.post('/api/gallery/delete-approved/:index', async (req, res) => {
   const index = parseInt(req.params.index);
-  const approvedList = JSON.parse(fs.readFileSync(path.join(__dirname, 'gallery.json')));
+  const approvedPath = path.join(__dirname, 'gallery.json');
+  const approvedList = fs.existsSync(approvedPath)
+    ? JSON.parse(fs.readFileSync(approvedPath, 'utf-8'))
+    : [];
 
   if (index >= 0 && index < approvedList.length) {
     const item = approvedList.splice(index, 1)[0];
-    const filePath = path.join(__dirname, 'gallery', item.filename);
-    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-    fs.writeFileSync(path.join(__dirname, 'gallery.json'), JSON.stringify(approvedList, null, 2));
+
+    // Delete from Cloudinary if applicable
+    if (item.public_id) {
+      try {
+        await cloudinary.uploader.destroy(item.public_id);
+      } catch (err) {
+        console.error('Cloudinary delete failed (approved):', err.message);
+      }
+    }
+
+    // Delete local file if legacy
+    if (item.filename) {
+      const filePath = path.join(__dirname, 'gallery', item.filename);
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    }
+
+    fs.writeFileSync(approvedPath, JSON.stringify(approvedList, null, 2));
     res.status(200).json({ message: 'Approved gallery item deleted' });
   } else {
     res.status(400).json({ error: 'Invalid index' });
   }
 });
+
 
 
 // --- כתבי אפרים Routes ---
