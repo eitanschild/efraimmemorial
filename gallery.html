@@ -1,0 +1,55 @@
+
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>גלריית תמונות - אפרים יכמן</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Assistant', sans-serif;
+      background-image: url('https://www.transparenttextures.com/patterns/white-wall.png');
+      background-repeat: repeat;
+      background-color: #fefefe;
+    }
+  </style>
+</head>
+<body class="text-gray-800">
+
+  <section class="py-16 px-6">
+    <div class="max-w-6xl mx-auto">
+      <h1 class="text-3xl md:text-5xl font-bold text-blue-900 mb-10 text-center">גלריית תמונות</h1>
+      <div id="galleryGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"></div>
+    </div>
+  </section>
+
+  <script>
+    async function loadGallery() {
+      const res = await fetch('http://localhost:3001/api/gallery/approved');
+      const data = await res.json();
+      const grid = document.getElementById('galleryGrid');
+      grid.innerHTML = '';
+
+      if (!data.length) {
+        grid.innerHTML = '<p class="text-center text-gray-600 col-span-full">אין תמונות להצגה עדיין.</p>';
+        return;
+      }
+
+      data.reverse().forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'bg-white rounded-xl shadow overflow-hidden';
+        div.innerHTML = `
+          <img src="http://localhost:3001/gallery/${item.filename}" class="w-full h-64 object-cover" />
+          <div class="p-4 text-center text-sm text-gray-700">${item.caption || ''}<br/><span class="text-xs text-gray-500">נשלח על ידי: ${item.uploader || "לא ידוע"}</span></div>
+        `;
+        grid.appendChild(div);
+      });
+    }
+
+    loadGallery();
+  </script>
+
+</body>
+</html>
