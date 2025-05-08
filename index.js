@@ -7,7 +7,13 @@ const fs = require('fs');
 
 
 const app = express();
-app.use(cors()); 
+const allowedOrigins = [
+  'https://efraimmemorial-frontend-git-main-agentflows-projects.vercel.app'
+];
+
+app.use(cors({
+  origin: allowedOrigins
+})); 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/pending-gallery', express.static(path.join(__dirname, 'pending-gallery')));
 app.use('/gallery', express.static(path.join(__dirname, 'gallery')));
