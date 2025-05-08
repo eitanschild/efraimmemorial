@@ -4,6 +4,8 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const fs = require('fs');
 
+const ktavimFile = path.join(__dirname, 'ktavim.json');
+
 const app = express();
 
 // Allow only your Vercel frontend
