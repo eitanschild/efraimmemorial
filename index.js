@@ -15,8 +15,6 @@ const allowedOrigins = [
   'http://localhost:3000'             // ✅ local dev
 ];
 
-];
-
 
 app.use(cors({ origin: allowedOrigins }));
 app.use(bodyParser.json());
