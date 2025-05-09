@@ -10,8 +10,11 @@ const app = express();
 
 // Allow only your Vercel frontend
 const allowedOrigins = [
-  'https://efraimmemorial-frontend-git-main-agentflows-projects.vercel.app'
+  'https://efraimmemorial-frontend.vercel.app', // ✅ Your production domain
+  'https://efraimmemorial-frontend-git-main-agentflows-projects.vercel.app', // ✅ Your preview build
+  'http://localhost:3000' // ✅ Optional: for local dev
 ];
+
 
 app.use(cors({ origin: allowedOrigins }));
 app.use(bodyParser.json());
