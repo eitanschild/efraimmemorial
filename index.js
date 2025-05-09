@@ -10,9 +10,11 @@ const app = express();
 
 // Allow only your Vercel frontend
 const allowedOrigins = [
-  'https://efraimmemorial-frontend.vercel.app', // ✅ Your production domain
-  'https://efraimmemorial-frontend-git-main-agentflows-projects.vercel.app', // ✅ Your preview build
-  'http://localhost:3000' // ✅ Optional: for local dev
+  'https://www.ephraimjackman.com',   // ✅ production custom domain
+  'https://efraimmemorial-frontend.vercel.app', // ✅ fallback Vercel domain
+  'http://localhost:3000'             // ✅ local dev
+];
+
 ];
 
 
