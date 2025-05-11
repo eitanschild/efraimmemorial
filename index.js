@@ -152,8 +152,6 @@ app.get('/api/memories', (req, res) => {
   res.json(data);
 });
 
-const PORT = process.env.PORT || 3001;
-
 app.get('/api/memories/approved', (req, res) => {
   const data = JSON.parse(fs.readFileSync(approvedFile));
   res.json(data);
