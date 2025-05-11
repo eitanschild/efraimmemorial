@@ -25,7 +25,7 @@ app.use('/admin', basicAuth({
 }));
 
 app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/admin.html'));
+  res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
 
