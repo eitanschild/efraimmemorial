@@ -18,13 +18,11 @@ const allowedOrigins = [
 // Password Protection
 const basicAuth = require('express-basic-auth');
 
-app.use('/admin', basicAuth({
+app.get('/admin', basicAuth({
   users: { 'admin': process.env.ADMIN_PASSWORD || 'defaultpass' },
   challenge: true,
   unauthorizedResponse: 'Access denied'
-}));
-
-app.get('/admin', (req, res) => {
+}), (req, res) => {
   res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
