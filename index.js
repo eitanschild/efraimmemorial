@@ -8,17 +8,6 @@ const ktavimFile = path.join(__dirname, 'ktavim.json');
 
 const app = express();
 
-// Password Protection
-app.post('/auth', (req, res) => {
-  const { username, password } = req.body;
-
-  if (username === 'admin' && password === process.env.ADMIN_PASSWORD) {
-    return res.sendStatus(200); // Success
-  }
-
-  res.sendStatus(401); // Unauthorized
-});
-
 
 // Allow only your Vercel frontend
 const allowedOrigins = [
@@ -39,6 +28,18 @@ app.use(cors({
 
 
 app.use(bodyParser.json());
+
+// Password Protection
+app.post('/auth', (req, res) => {
+  const { username, password } = req.body;
+
+  if (username === 'admin' && password === process.env.ADMIN_PASSWORD) {
+    return res.sendStatus(200); // Success
+  }
+
+  res.sendStatus(401); // Unauthorized
+});
+
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // You no longer use these folders, but if still present:
