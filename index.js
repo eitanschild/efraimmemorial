@@ -12,7 +12,7 @@ const app = express();
 const basicAuth = require('express-basic-auth');
 
 app.get('/admin', basicAuth({
-  users: { 'admin': adminPassword },
+  users: { 'admin': AdminPassword },
   challenge: true,
   realm: 'EfraimAdmin',
   unauthorizedResponse: (req) => 'גישה נדחתה'
