@@ -33,12 +33,17 @@ app.use(bodyParser.json());
 app.post('/auth', (req, res) => {
   const { username, password } = req.body;
 
+  console.log('username:', username);
+  console.log('password:', password);
+  console.log('expected:', process.env.ADMIN_PASSWORD);
+
   if (username === 'admin' && password === process.env.ADMIN_PASSWORD) {
-    return res.sendStatus(200); // Success
+    return res.sendStatus(200);
   }
 
-  res.sendStatus(401); // Unauthorized
+  res.sendStatus(401);
 });
+
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
