@@ -8,23 +8,24 @@ const ktavimFile = path.join(__dirname, 'ktavim.json');
 
 const app = express();
 
+// Password Protection
+const basicAuth = require('express-basic-auth');
+
+app.get('/admin', basicAuth({
+  users: { 'admin': adminPassword },
+  challenge: true,
+  realm: 'EfraimAdmin',
+  unauthorizedResponse: (req) => 'גישה נדחתה'
+}), (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin.html'));
+});
+
 // Allow only your Vercel frontend
 const allowedOrigins = [
   'https://www.ephraimjackman.com',   // ✅ production custom domain
   'https://efraimmemorial-frontend.vercel.app', // ✅ fallback Vercel domain
   'http://localhost:3000'             // ✅ local dev
 ];
-
-// Password Protection
-const basicAuth = require('express-basic-auth');
-
-app.get('/admin', basicAuth({
-  users: { 'admin': process.env.ADMIN_PASSWORD || 'defaultpass' },
-  challenge: true,
-  unauthorizedResponse: 'Access denied'
-}), (req, res) => {
-  res.sendFile(path.join(__dirname, 'admin.html'));
-});
 
 
 app.use(cors({ origin: allowedOrigins }));
