@@ -22,11 +22,10 @@ app.post('/auth', (req, res) => {
 
 // Allow only your Vercel frontend
 const allowedOrigins = [
-  'https://www.ephraimjackman.com',   // ✅ production custom domain
-  'https://efraimmemorial-frontend.vercel.app', // ✅ fallback Vercel domain
-  'http://localhost:3000'             // ✅ local dev
+  'https://www.ephraimjackman.com',
+  'https://efraimmemorial-frontend.vercel.app',
+  'http://localhost:3000'
 ];
-
 
 app.use(cors({
   origin: function (origin, callback) {
@@ -37,6 +36,7 @@ app.use(cors({
     }
   }
 }));
+
 
 app.use(bodyParser.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
