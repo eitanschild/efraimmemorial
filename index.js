@@ -15,6 +15,19 @@ const allowedOrigins = [
   'http://localhost:3000'             // ✅ local dev
 ];
 
+// Password Protection
+const basicAuth = require('express-basic-auth');
+
+app.use('/admin', basicAuth({
+  users: { 'admin': process.env.ADMIN_PASSWORD || 'defaultpass' },
+  challenge: true,
+  unauthorizedResponse: 'Access denied'
+}));
+
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/admin.html'));
+});
+
 
 app.use(cors({ origin: allowedOrigins }));
 app.use(bodyParser.json());
