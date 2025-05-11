@@ -3,37 +3,30 @@ const path = require('path');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const fs = require('fs');
-const basicAuth = require('express-basic-auth');
-
-const app = express();
-const PORT = process.env.PORT || 3001;
 
 const ktavimFile = path.join(__dirname, 'ktavim.json');
 
-// General middleware FIRST
-app.use(cors({
-  origin: [
-    'https://www.ephraimjackman.com',
-    'https://efraimmemorial-frontend.vercel.app',
-    'http://localhost:3000'
-  ]
-}));
-app.use(bodyParser.json());
+const app = express();
 
-// 🔐 Password-protected admin route
+// Password Protection
+const basicAuth = require('express-basic-auth');
+
 app.get('/admin', basicAuth({
   users: { 'admin': process.env.ADMIN_PASSWORD || 'defaultpass' },
+
   challenge: true,
   realm: 'EfraimAdmin',
-  unauthorizedResponse: () => 'גישה נדחתה'
+  unauthorizedResponse: (req) => 'גישה נדחתה'
 }), (req, res) => {
   res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
-// Listen
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// Allow only your Vercel frontend
+const allowedOrigins = [
+  'https://www.ephraimjackman.com',   // ✅ production custom domain
+  'https://efraimmemorial-frontend.vercel.app', // ✅ fallback Vercel domain
+  'http://localhost:3000'             // ✅ local dev
+];
 
 
 app.use(cors({ origin: allowedOrigins }));
@@ -151,6 +144,8 @@ app.get('/api/memories', (req, res) => {
   const data = JSON.parse(fs.readFileSync(approvedFile));
   res.json(data);
 });
+
+const PORT = process.env.PORT || 3001;
 
 app.get('/api/memories/approved', (req, res) => {
   const data = JSON.parse(fs.readFileSync(approvedFile));
