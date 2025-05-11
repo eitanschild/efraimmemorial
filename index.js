@@ -9,17 +9,16 @@ const ktavimFile = path.join(__dirname, 'ktavim.json');
 const app = express();
 
 // Password Protection
-const basicAuth = require('express-basic-auth');
+app.post('/auth', (req, res) => {
+  const { username, password } = req.body;
 
-app.get('/admin', basicAuth({
-  users: { 'admin': process.env.ADMIN_PASSWORD || 'defaultpass' },
+  if (username === 'admin' && password === process.env.ADMIN_PASSWORD) {
+    return res.sendStatus(200); // Success
+  }
 
-  challenge: true,
-  realm: 'EfraimAdmin',
-  unauthorizedResponse: (req) => 'גישה נדחתה'
-}), (req, res) => {
-  res.sendFile(path.join(__dirname, 'admin.html'));
+  res.sendStatus(401); // Unauthorized
 });
+
 
 // Allow only your Vercel frontend
 const allowedOrigins = [
