@@ -19,6 +19,18 @@ const allowedOrigins = [
 
 app.use(bodyParser.json());
 
+
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'keyboard-cat',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 1000 * 60 * 60
+  }
+}));
+
 // Password Protection
 app.post('/auth', (req, res) => {
   const { username, password } = req.body;
@@ -34,17 +46,6 @@ app.post('/auth', (req, res) => {
 
   res.sendStatus(401);
 });
-
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'keyboard-cat',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 1000 * 60 * 60
-  }
-}));
 
 
 app.use(cors({
