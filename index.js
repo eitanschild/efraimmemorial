@@ -3,6 +3,7 @@ const path = require('path');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const fs = require('fs');
+const session = require('express-session');
 
 const ktavimFile = path.join(__dirname, 'ktavim.json');
 
