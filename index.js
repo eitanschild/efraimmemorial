@@ -59,6 +59,8 @@ app.post('/auth', (req, res) => {
 });
 
 app.get('/admin.html', (req, res) => {
+  console.log('🧠 SESSION CHECK (/admin.html):', req.session);
+
   if (!req.session || !req.session.admin) {
     return res.status(403).send('גישה נדחתה');
   }
