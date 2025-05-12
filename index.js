@@ -17,6 +17,8 @@ const allowedOrigins = [
   'http://localhost:3000'
 ];
 
+app.use(bodyParser.json());
+
 app.use(session({
   secret: process.env.SESSION_SECRET || 'keyboard-cat',
   resave: false,
@@ -63,11 +65,6 @@ app.get('/admin.html', (req, res) => {
 
   res.sendFile(path.join(__dirname, 'admin.html'));
 });
-
-
-app.use(bodyParser.json());
-
-
 
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -142,9 +139,6 @@ app.post('/api/gallery', upload.single('image'), async (req, res) => {
     res.status(500).json({ error: 'Image upload failed.' });
   }
 });
-
-
-app.use(bodyParser.json());
 
 const pendingFile = path.join(__dirname, 'pendingMemories.json');
 const approvedFile = path.join(__dirname, 'approvedMemories.json');
