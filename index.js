@@ -50,14 +50,22 @@ app.use(session({
 app.use(bodyParser.json());
 
 // Password Protection
-app.post('/auth',  requireAdmin, (req, res) => {
+app.post('/auth', (req, res) => {
   const { username, password } = req.body;
+
+  console.log("Login attempt:");
+  console.log("username:", JSON.stringify(username));
+  console.log("password:", JSON.stringify(password));
+  console.log("expected password:", JSON.stringify(process.env.ADMIN_PASSWORD));
+
   if (username === 'admin' && password === process.env.ADMIN_PASSWORD) {
     req.session.admin = true;
     return res.sendStatus(200);
   }
+
   res.sendStatus(401);
 });
+
 
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
