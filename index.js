@@ -46,6 +46,13 @@ app.use(session({
   }
 }));
 
+app.post('/logout', (req, res) => {
+  req.session.destroy(() => {
+    res.clearCookie('connect.sid');
+    res.sendStatus(200);
+  });
+});
+
 
 app.use(bodyParser.json());
 
