@@ -23,9 +23,9 @@ app.use(cors({
     } else {
       callback(new Error('Not allowed by CORS'));
     }
-  }
+  },
+  credentials: true // 🔥 THIS is the missing piece
 }));
-
 
 app.get('/admin.html', (req, res) => {
   if (!req.session || !req.session.admin) {
