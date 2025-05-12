@@ -31,6 +31,19 @@ app.use(session({
   }
 }));
 
+
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true 
+}));
+
 // Password Protection
 app.post('/auth', (req, res) => {
   const { username, password } = req.body;
@@ -46,19 +59,6 @@ app.post('/auth', (req, res) => {
 
   res.sendStatus(401);
 });
-
-
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true 
-}));
-
 
 
 app.get('/admin.html', (req, res) => {
