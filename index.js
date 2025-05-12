@@ -16,6 +16,18 @@ const allowedOrigins = [
   'http://localhost:3000'
 ];
 
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'keyboard-cat',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 1000 * 60 * 60
+  }
+}));
+
+
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
@@ -47,6 +59,7 @@ app.post('/auth', (req, res) => {
   console.log('expected:', process.env.ADMIN_PASSWORD);
 
   if (username === 'admin' && password === process.env.ADMIN_PASSWORD) {
+    req.session.admin = true;
     return res.sendStatus(200);
   }
 
@@ -128,7 +141,6 @@ app.post('/api/gallery', upload.single('image'), async (req, res) => {
 });
 
 
-app.use(cors());
 app.use(bodyParser.json());
 
 const pendingFile = path.join(__dirname, 'pendingMemories.json');
