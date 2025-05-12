@@ -20,6 +20,17 @@ const allowedOrigins = [
 app.use(bodyParser.json());
 
 
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true 
+}));
+
 app.use(session({
   secret: process.env.SESSION_SECRET || 'keyboard-cat',
   resave: false,
@@ -33,16 +44,6 @@ app.use(session({
 
 
 
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true 
-}));
 
 // Password Protection
 app.post('/auth', (req, res) => {
