@@ -150,7 +150,6 @@ app.post('/api/gallery', upload.single('image'), async (req, res) => {
 });
 
 
-app.use(cors());
 app.use(bodyParser.json());
 
 const pendingFile = path.join(__dirname, 'pendingMemories.json');
