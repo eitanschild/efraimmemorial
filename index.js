@@ -8,51 +8,23 @@ const ktavimFile = path.join(__dirname, 'ktavim.json');
 
 const app = express();
 
-function requireAdmin(req, res, next) {
-  if (req.session && req.session.admin) {
-    return next(); // ✅ Let them through
-  }
-  res.status(403).json({ error: 'Unauthorized' }); // ❌ Block them
-}
-
 
 // Allow only your Vercel frontend
+const allowedOrigins = [
+  'https://www.ephraimjackman.com',
+  'https://efraimmemorial-frontend.vercel.app',
+  'http://localhost:3000'
+];
+
 app.use(cors({
   origin: function (origin, callback) {
-    const allowedOrigins = [
-      'https://www.ephraimjackman.com',
-      'https://efraimmemorial-frontend.vercel.app',
-      'http://localhost:3000'
-    ];
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
     }
-  },
-  credentials: true // 🔥 REQUIRED for session cookies to be sent & accepted
-}));
-
-
-const session = require('express-session');
-
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'keyboard-cat',  // change this in Railway
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 1000 * 60 * 60  // 1 hour
   }
 }));
-
-app.post('/logout', (req, res) => {
-  req.session.destroy(() => {
-    res.clearCookie('connect.sid');
-    res.sendStatus(200);
-  });
-});
 
 
 app.use(bodyParser.json());
@@ -61,19 +33,16 @@ app.use(bodyParser.json());
 app.post('/auth', (req, res) => {
   const { username, password } = req.body;
 
-  console.log("Login attempt:");
-  console.log("username:", JSON.stringify(username));
-  console.log("password:", JSON.stringify(password));
-  console.log("expected password:", JSON.stringify(process.env.ADMIN_PASSWORD));
+  console.log('username:', username);
+  console.log('password:', password);
+  console.log('expected:', process.env.ADMIN_PASSWORD);
 
   if (username === 'admin' && password === process.env.ADMIN_PASSWORD) {
-    req.session.admin = true;
     return res.sendStatus(200);
   }
 
   res.sendStatus(401);
 });
-
 
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -150,6 +119,7 @@ app.post('/api/gallery', upload.single('image'), async (req, res) => {
 });
 
 
+app.use(cors());
 app.use(bodyParser.json());
 
 const pendingFile = path.join(__dirname, 'pendingMemories.json');
@@ -163,12 +133,12 @@ app.post('/api/memories', (req, res) => {
   res.status(200).json({ message: 'Memory submitted and pending approval' });
 });
 
-app.get('/api/pending',  requireAdmin, (req, res) => {
+app.get('/api/pending', (req, res) => {
   const data = JSON.parse(fs.readFileSync(pendingFile));
   res.json(data);
 });
 
-app.post('/api/approve/:index',  requireAdmin, (req, res) => {
+app.post('/api/approve/:index', (req, res) => {
   const index = parseInt(req.params.index);
   const pending = JSON.parse(fs.readFileSync(pendingFile));
   const approved = JSON.parse(fs.readFileSync(approvedFile));
@@ -198,7 +168,7 @@ app.get('/api/memories/approved', (req, res) => {
 
 
 
-app.post('/api/ktavim/approve/:index',  requireAdmin, (req, res) => {
+app.post('/api/ktavim/approve/:index', (req, res) => {
   const data = JSON.parse(fs.readFileSync(ktavimFile));
   const idx = parseInt(req.params.index);
   if (data[idx]) {
@@ -212,7 +182,7 @@ app.post('/api/ktavim/approve/:index',  requireAdmin, (req, res) => {
 
 const axios = require('axios');
 
-app.get('/api/cloudinary/usage', requireAdmin, async (req, res) => {
+app.get('/api/cloudinary/usage', async (req, res) => {
   try {
     const result = await axios.get(
       `https://api.cloudinary.com/v1_1/${process.env.CLOUDINARY_CLOUD_NAME}/usage`,
@@ -237,7 +207,7 @@ app.listen(PORT, () => {
 });
 
 // Edit a pending memory by index
-app.post('/api/edit/:index',  requireAdmin, (req, res) => {
+app.post('/api/edit/:index', (req, res) => {
   const index = parseInt(req.params.index);
   const { name, message } = req.body;
   const pending = JSON.parse(fs.readFileSync(pendingFile));
@@ -252,7 +222,7 @@ app.post('/api/edit/:index',  requireAdmin, (req, res) => {
 });
 
 // Delete a pending memory by index
-app.post('/api/delete/:index',  requireAdmin, (req, res) => {
+app.post('/api/delete/:index', (req, res) => {
   const index = parseInt(req.params.index);
   const pending = JSON.parse(fs.readFileSync(pendingFile));
 
@@ -267,7 +237,7 @@ app.post('/api/delete/:index',  requireAdmin, (req, res) => {
 
 
 // Delete approved memory by index
-app.post('/api/delete-approved/:index',  requireAdmin, (req, res) => {
+app.post('/api/delete-approved/:index', (req, res) => {
   const index = parseInt(req.params.index);
   const approved = JSON.parse(fs.readFileSync(approvedFile));
 
@@ -282,19 +252,19 @@ app.post('/api/delete-approved/:index',  requireAdmin, (req, res) => {
 
 
 // Get pending gallery items
-app.get('/api/gallery/pending',  requireAdmin, (req, res) => {
+app.get('/api/gallery/pending', (req, res) => {
   const pending = JSON.parse(fs.readFileSync(path.join(__dirname, 'pending-gallery.json')));
   res.json(pending);
 });
 
 // Get approved gallery items
-app.get('/api/gallery/approved',  requireAdmin, (req, res) => {
+app.get('/api/gallery/approved', (req, res) => {
   const approved = JSON.parse(fs.readFileSync(path.join(__dirname, 'gallery.json')));
   res.json(approved);
 });
 
 // Approve gallery image
-app.post('/api/gallery/approve/:index',  requireAdmin, (req, res) => {
+app.post('/api/gallery/approve/:index', (req, res) => {
   const index = parseInt(req.params.index);
   const pendingPath = path.join(__dirname, 'pending-gallery.json');
   const approvedPath = path.join(__dirname, 'gallery.json');
@@ -317,7 +287,7 @@ app.post('/api/gallery/approve/:index',  requireAdmin, (req, res) => {
 });
 
   //Delete Pending Gallery Item
-app.post('/api/gallery/delete/:index',requireAdmin, async (req, res) => {
+app.post('/api/gallery/delete/:index', async (req, res) => {
   const index = parseInt(req.params.index);
   const pendingPath = path.join(__dirname, 'pending-gallery.json');
   const pendingList = fs.existsSync(pendingPath)
@@ -351,7 +321,7 @@ app.post('/api/gallery/delete/:index',requireAdmin, async (req, res) => {
 
 
 // Delete approved gallery item
-app.post('/api/gallery/delete-approved/:index', requireAdmin, async (req, res) => {
+app.post('/api/gallery/delete-approved/:index', async (req, res) => {
   const index = parseInt(req.params.index);
   const approvedPath = path.join(__dirname, 'gallery.json');
   const approvedList = fs.existsSync(approvedPath)
@@ -370,12 +340,19 @@ app.post('/api/gallery/delete-approved/:index', requireAdmin, async (req, res) =
       }
     }
 
+    // Delete local file if legacy
+    if (item.filename) {
+      const filePath = path.join(__dirname, 'gallery', item.filename);
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    }
+
     fs.writeFileSync(approvedPath, JSON.stringify(approvedList, null, 2));
     res.status(200).json({ message: 'Approved gallery item deleted' });
   } else {
     res.status(400).json({ error: 'Invalid index' });
   }
 });
+
 
 
 // --- כתבי אפרים Routes ---
@@ -398,7 +375,7 @@ app.get('/api/ktavim', (req, res) => {
 });
 
 
-app.post('/api/ktavim',  requireAdmin, (req, res) => {
+app.post('/api/ktavim', (req, res) => {
   const { title, content } = req.body;
   if (!title || !content) {
     return res.status(400).json({ error: 'Missing fields' });
@@ -421,7 +398,7 @@ app.post('/api/ktavim',  requireAdmin, (req, res) => {
   }
 });
 
-app.delete('/api/ktavim/:index',  requireAdmin, (req, res) => {
+app.delete('/api/ktavim/:index', (req, res) => {
   const index = parseInt(req.params.index);
   if (isNaN(index)) return res.status(400).send('Invalid index');
 
@@ -435,4 +412,3 @@ app.delete('/api/ktavim/:index',  requireAdmin, (req, res) => {
   fs.writeFileSync(file, JSON.stringify(data, null, 2));
   res.status(200).send('Deleted');
 });
-
