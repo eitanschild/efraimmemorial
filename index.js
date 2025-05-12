@@ -19,6 +19,22 @@ const allowedOrigins = [
 
 app.use(bodyParser.json());
 
+// Password Protection
+app.post('/auth', (req, res) => {
+  const { username, password } = req.body;
+
+  console.log('username:', username);
+  console.log('password:', password);
+  console.log('expected:', process.env.ADMIN_PASSWORD);
+
+  if (username === 'admin' && password === process.env.ADMIN_PASSWORD) {
+    req.session.admin = true;
+    return res.sendStatus(200);
+  }
+
+  res.sendStatus(401);
+});
+
 app.use(session({
   secret: process.env.SESSION_SECRET || 'keyboard-cat',
   resave: false,
@@ -42,21 +58,7 @@ app.use(cors({
   credentials: true 
 }));
 
-// Password Protection
-app.post('/auth', (req, res) => {
-  const { username, password } = req.body;
 
-  console.log('username:', username);
-  console.log('password:', password);
-  console.log('expected:', process.env.ADMIN_PASSWORD);
-
-  if (username === 'admin' && password === process.env.ADMIN_PASSWORD) {
-    req.session.admin = true;
-    return res.sendStatus(200);
-  }
-
-  res.sendStatus(401);
-});
 
 app.get('/admin.html', (req, res) => {
   console.log('🧠 SESSION CHECK (/admin.html):', req.session);
