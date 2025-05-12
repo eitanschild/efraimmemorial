@@ -89,7 +89,7 @@ cloudinary.config({
 });
 
 // Gallery upload route with 5MB limit
-app.post('/api/gallery', requireAdmin, upload.single('image'), async (req, res) => {
+app.post('/api/gallery', upload.single('image'), async (req, res) => {
   try {
     const file = req.file;
 
@@ -140,7 +140,7 @@ app.use(bodyParser.json());
 const pendingFile = path.join(__dirname, 'pendingMemories.json');
 const approvedFile = path.join(__dirname, 'approvedMemories.json');
 
-app.post('/api/memories',  requireAdmin, (req, res) => {
+app.post('/api/memories', (req, res) => {
   const memory = req.body;
   const current = JSON.parse(fs.readFileSync(pendingFile));
   current.push(memory);
@@ -169,14 +169,14 @@ app.post('/api/approve/:index',  requireAdmin, (req, res) => {
   }
 });
 
-app.get('/api/memories',  requireAdmin, (req, res) => {
+app.get('/api/memories', (req, res) => {
   const data = JSON.parse(fs.readFileSync(approvedFile));
   res.json(data);
 });
 
 const PORT = process.env.PORT || 3001;
 
-app.get('/api/memories/approved',  requireAdmin, (req, res) => {
+app.get('/api/memories/approved', (req, res) => {
   const data = JSON.parse(fs.readFileSync(approvedFile));
   res.json(data);
 });
@@ -365,7 +365,7 @@ app.post('/api/gallery/delete-approved/:index', requireAdmin, async (req, res) =
 
 // --- כתבי אפרים Routes ---
 
-app.get('/api/ktavim',  requireAdmin, (req, res) => {
+app.get('/api/ktavim', (req, res) => {
   if (!fs.existsSync(ktavimFile)) {
     return res.json([]);
   }
