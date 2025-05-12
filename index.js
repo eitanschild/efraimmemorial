@@ -27,6 +27,15 @@ app.use(cors({
 }));
 
 
+app.get('/admin.html', (req, res) => {
+  if (!req.session || !req.session.admin) {
+    return res.status(403).send('גישה נדחתה');
+  }
+
+  res.sendFile(path.join(__dirname, 'admin.html'));
+});
+
+
 app.use(bodyParser.json());
 
 // Password Protection
