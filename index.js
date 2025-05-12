@@ -17,21 +17,22 @@ function requireAdmin(req, res, next) {
 
 
 // Allow only your Vercel frontend
-const allowedOrigins = [
-  'https://www.ephraimjackman.com',
-  'https://efraimmemorial-frontend.vercel.app',
-  'http://localhost:3000'
-];
-
 app.use(cors({
   origin: function (origin, callback) {
+    const allowedOrigins = [
+      'https://www.ephraimjackman.com',
+      'https://efraimmemorial-frontend.vercel.app',
+      'http://localhost:3000'
+    ];
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
     }
-  }
+  },
+  credentials: true // 🔥 REQUIRED for session cookies to be sent & accepted
 }));
+
 
 const session = require('express-session');
 
