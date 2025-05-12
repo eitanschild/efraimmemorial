@@ -37,19 +37,8 @@ app.use(cors({
       callback(new Error('Not allowed by CORS'));
     }
   },
-  credentials: true // 🔥 THIS is the missing piece
+  credentials: true 
 }));
-
-app.get('/admin.html', (req, res) => {
-  if (!req.session || !req.session.admin) {
-    return res.status(403).send('גישה נדחתה');
-  }
-
-  res.sendFile(path.join(__dirname, 'admin.html'));
-});
-
-
-app.use(bodyParser.json());
 
 // Password Protection
 app.post('/auth', (req, res) => {
@@ -66,6 +55,19 @@ app.post('/auth', (req, res) => {
 
   res.sendStatus(401);
 });
+
+app.get('/admin.html', (req, res) => {
+  if (!req.session || !req.session.admin) {
+    return res.status(403).send('גישה נדחתה');
+  }
+
+  res.sendFile(path.join(__dirname, 'admin.html'));
+});
+
+
+app.use(bodyParser.json());
+
+
 
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
