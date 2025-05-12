@@ -46,7 +46,7 @@ app.use(session({
 
 
 // Password Protection
-app.post('/auth', async (req, res) => {
+app.post('/auth', (req, res) => {
   const { username, password } = req.body;
 
   console.log('username:', username);
@@ -54,23 +54,16 @@ app.post('/auth', async (req, res) => {
   console.log('expected:', process.env.ADMIN_PASSWORD);
 
   if (username === 'admin' && password === process.env.ADMIN_PASSWORD) {
-    req.session.regenerate((err) => {
+    req.session.admin = true;
+
+    req.session.save((err) => {
       if (err) {
-        console.error('❌ Session regeneration error:', err);
+        console.error('❌ Failed to save session:', err);
         return res.sendStatus(500);
       }
 
-      req.session.admin = true;
       console.log('✅ Session after login:', req.session);
-
-      req.session.save((err) => {
-        if (err) {
-          console.error('❌ Failed to save session:', err);
-          return res.sendStatus(500);
-        }
-
-        res.sendStatus(200);
-      });
+      res.sendStatus(200);
     });
   } else {
     res.sendStatus(401);
