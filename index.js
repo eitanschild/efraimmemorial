@@ -55,15 +55,13 @@ app.post('/auth', (req, res) => {
 
   if (username === 'admin' && password === process.env.ADMIN_PASSWORD) {
     req.session.admin = true;
-    return res.sendStatus(200);
+    req.session.save(() => {
+      console.log('✅ Session saved with admin = true');
+      res.sendStatus(200);
+    });
+  } else {
+    res.sendStatus(401);
   }
-
-  res.sendStatus(401);
-});
-
-app.get('/test-session', (req, res) => {
-  console.log('🧪 TEST SESSION:', req.session);
-  res.json(req.session);
 });
 
 
