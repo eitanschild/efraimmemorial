@@ -65,6 +65,12 @@ app.post('/auth', (req, res) => {
 });
 
 
+app.get('/test-session', (req, res) => {
+  console.log('🧪 TEST SESSION:', req.session);
+  res.json(req.session);
+});
+
+
 
 app.get('/admin.html', (req, res) => {
   console.log('🧠 SESSION CHECK (/admin.html):', req.session);
