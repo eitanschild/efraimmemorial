@@ -83,14 +83,6 @@ app.post('/auth', (req, res) => {
 
 
 
-
-app.get('/test-session', (req, res) => {
-  console.log('🧪 TEST SESSION:', req.session);
-  res.json(req.session);
-});
-
-
-
 app.get('/admin.html', (req, res) => {
   console.log('🧠 SESSION CHECK (/admin.html):', req.session);
 
@@ -99,6 +91,23 @@ app.get('/admin.html', (req, res) => {
   }
 
   res.sendFile(path.join(__dirname, 'admin.html'));
+});
+
+app.post('/logout', (req, res) => {
+  req.session.destroy(err => {
+    if (err) {
+      console.error('Logout failed:', err);
+      return res.status(500).json({ error: 'Logout failed' });
+    }
+
+    res.clearCookie('connect.sid', {
+      path: '/',
+      secure: true, // match session config
+      sameSite: 'None' // match session config
+    });
+
+    res.sendStatus(200);
+  });
 });
 
 
