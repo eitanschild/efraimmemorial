@@ -58,21 +58,29 @@ app.post('/auth', (req, res) => {
   console.log('expected:', process.env.ADMIN_PASSWORD);
 
   if (username === 'admin' && password === process.env.ADMIN_PASSWORD) {
-    req.session.admin = true;
-
-    req.session.save((err) => {
+    req.session.regenerate((err) => {
       if (err) {
-        console.error('❌ Failed to save session:', err);
+        console.error('❌ Session regeneration error:', err);
         return res.sendStatus(500);
       }
 
-      console.log('✅ Session after login:', req.session);
-      res.sendStatus(200);
+      req.session.admin = true;
+
+      req.session.save((err) => {
+        if (err) {
+          console.error('❌ Failed to save session:', err);
+          return res.sendStatus(500);
+        }
+
+        console.log('✅ Logged in, session:', req.session);
+        res.sendStatus(200);
+      });
     });
   } else {
     res.sendStatus(401);
   }
 });
+
 
 
 
