@@ -31,10 +31,14 @@
             class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition">התנתק</button>
   </div>
   <script>
-    function logout() {
-      localStorage.removeItem('adminLoggedIn');
-      window.location.href = '/https://www.ephraimjackman.com/login.html';
-    }
+    async function logout() {
+  await fetch('https://efraimemorial-production.up.railway.app/logout', {
+    method: 'POST',
+    credentials: 'include'
+  });
+  window.location.href = 'https://www.ephraimjackman.com/login.html';
+}
+
   </script>
 </body>
 </html>
