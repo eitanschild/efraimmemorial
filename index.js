@@ -28,19 +28,23 @@ app.use(cors({
       callback(new Error('Not allowed by CORS'));
     }
   },
+  origin: 'https://www.ephraimjackman.com',
   credentials: true 
 }));
 
+app.set('trust proxy', 1); // trust Railway's proxy
 app.use(session({
   secret: process.env.SESSION_SECRET || 'keyboard-cat',
   resave: false,
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    secure: false,
+    secure: true,           // must be true in production
+    sameSite: 'None',       // needed for cross-site cookie
     maxAge: 1000 * 60 * 60
   }
 }));
+
 
 
 
