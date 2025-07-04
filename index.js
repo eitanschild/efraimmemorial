@@ -289,6 +289,26 @@ app.get('/api/cloudinary/usage', async (req, res) => {
   }
 });
 
+app.post('/api/videos/delete/:index', (req, res) => {
+  if (!req.session || !req.session.admin) {
+    return res.status(403).json({ error: 'Unauthorized' });
+  }
+
+  if (!fs.existsSync(videosFile)) {
+    return res.status(404).json({ error: 'File not found' });
+  }
+
+  const index = parseInt(req.params.index);
+  const data = JSON.parse(fs.readFileSync(videosFile));
+
+  if (index < 0 || index >= data.length) {
+    return res.status(400).json({ error: 'Invalid index' });
+  }
+
+  data.splice(index, 1);
+  fs.writeFileSync(videosFile, JSON.stringify(data, null, 2));
+  res.json({ message: 'Video deleted' });
+});
 
 
 app.listen(PORT, () => {
