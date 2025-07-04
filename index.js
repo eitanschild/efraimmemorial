@@ -4,7 +4,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const fs = require('fs');
 const session = require('express-session');
-
+const videosFile = path.join(__dirname, 'videos.json');
 const ktavimFile = path.join(__dirname, 'ktavim.json');
 
 const app = express();
@@ -80,6 +80,33 @@ app.post('/auth', (req, res) => {
     res.sendStatus(401);
   }
 });
+
+
+// GET all approved videos
+app.get('/api/videos', (req, res) => {
+  const data = fs.existsSync(videosFile) ? JSON.parse(fs.readFileSync(videosFile)) : [];
+  res.json(data);
+});
+
+// POST a new video (admin only)
+app.post('/api/videos', (req, res) => {
+  if (!req.session || !req.session.admin) {
+    return res.status(403).json({ error: 'Unauthorized' });
+  }
+
+  const { title, youtubeId, section } = req.body;
+
+  if (!title || !youtubeId || !section) {
+    return res.status(400).json({ error: 'Missing fields' });
+  }
+
+  let data = fs.existsSync(videosFile) ? JSON.parse(fs.readFileSync(videosFile)) : [];
+
+  data.push({ title, youtubeId, section });
+  fs.writeFileSync(videosFile, JSON.stringify(data, null, 2));
+  res.json({ success: true });
+});
+
 
 
 
