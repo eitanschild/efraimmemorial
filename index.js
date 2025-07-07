@@ -6,6 +6,8 @@ const fs = require('fs');
 const session = require('express-session');
 const videosFile = path.join(__dirname, 'videos.json');
 const ktavimFile = path.join(__dirname, 'ktavim.json');
+const memoriesFile = path.join(__dirname, 'approvedMemories.json');
+
 
 const app = express();
 
@@ -461,6 +463,29 @@ app.post('/api/gallery/delete-approved/:index', async (req, res) => {
     res.status(400).json({ error: 'Invalid index' });
   }
 });
+
+app.get('/api/search', (req, res) => {
+  const q = (req.query.q || '').toLowerCase().trim();
+  if (!q) return res.json({ ktavim: [], memories: [], videos: [] });
+
+  // Load all data
+  const ktavim = fs.existsSync(ktavimFile) ? JSON.parse(fs.readFileSync(ktavimFile)) : [];
+  const memories = fs.existsSync(memoriesFile) ? JSON.parse(fs.readFileSync(memoriesFile)) : [];
+  const videos = fs.existsSync(videosFile) ? JSON.parse(fs.readFileSync(videosFile)) : [];
+
+  const filterText = (text) => text.toLowerCase().includes(q);
+
+  const ktavMatches = ktavim.filter(k => filterText(k.title) || filterText(k.content));
+  const memoryMatches = memories.filter(m => filterText(m.name || '') || filterText(m.message || ''));
+  const videoMatches = videos.filter(v => filterText(v.title || ''));
+
+  res.json({
+    ktavim: ktavMatches,
+    memories: memoryMatches,
+    videos: videoMatches
+  });
+});
+
 
 
 
