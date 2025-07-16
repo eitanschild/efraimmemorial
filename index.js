@@ -7,7 +7,7 @@ const session = require('express-session');
 const videosFile = path.join(__dirname, 'videos.json');
 const ktavimFile = path.join(__dirname, 'ktavim.json');
 const memoriesFile = path.join(__dirname, 'approvedMemories.json');
-
+const pool = require('./db');
 
 const app = express();
 
