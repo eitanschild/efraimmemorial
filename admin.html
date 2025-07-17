@@ -109,8 +109,9 @@
 </div>
 <script>
       async function fetchMemories() {
-        const pendingRes = await fetch('https://efraimemorial-production.up.railway.app/api/pending');
-        const approvedRes = await fetch('https://efraimemorial-production.up.railway.app/api/memories');
+        const pendingRes = await fetch('https://efraimemorial-production.up.railway.app/api/memories/pending');
+        const approvedRes = await fetch('https://efraimemorial-production.up.railway.app/api/memories/approved');
+
         const pending = await pendingRes.json();
         const approved = await approvedRes.json();
 
