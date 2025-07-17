@@ -96,14 +96,18 @@ app.post('/api/memories/delete/:id', async (req, res) => {
 
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
     }
+    return callback(new Error('Not allowed by CORS'));
   },
-  credentials: true 
+  credentials: true,
+  methods: ['GET', 'POST', 'DELETE', 'PUT', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
 
 app.set('trust proxy', 1); // trust Railway's proxy
 app.use(session({
