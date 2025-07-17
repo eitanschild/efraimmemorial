@@ -49,9 +49,10 @@ app.post('/api/memories', async (req, res) => {
 
   try {
     await pool.query(
-      'INSERT INTO memories (name, message) VALUES ($1, $2)',
+      'INSERT INTO memories (name, message, created_at, approved) VALUES ($1, $2, CURRENT_DATE, false)',
       [name, message]
     );
+        
     res.status(201).json({ success: true });
   } catch (err) {
     console.error('Error inserting memory:', err);
