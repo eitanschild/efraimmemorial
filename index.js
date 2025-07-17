@@ -25,6 +25,74 @@ const allowedOrigins = [
 
 app.use(bodyParser.json());
 
+app.post('/api/memories', async (req, res) => {
+  const { name, message } = req.body;
+
+  if (!name || !message) {
+    return res.status(400).json({ error: 'Missing name or message' });
+  }
+
+  try {
+    await pool.query(
+      'INSERT INTO memories (name, message) VALUES ($1, $2)',
+      [name, message]
+    );
+    res.status(201).json({ success: true });
+  } catch (err) {
+    console.error('Error inserting memory:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/api/memories/approved', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT id, name, message, created_at FROM memories WHERE approved = true ORDER BY created_at DESC'
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching approved memories:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+app.get('/api/memories/pending', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT id, name, message, created_at FROM memories WHERE approved = false ORDER BY created_at DESC'
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching pending memories:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/memories/approve/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    await pool.query(
+      'UPDATE memories SET approved = true WHERE id = $1',
+      [id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error approving memory:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/memories/delete/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    await pool.query('DELETE FROM memories WHERE id = $1', [id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error deleting memory:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 app.use(cors({
   origin: function (origin, callback) {
@@ -216,9 +284,6 @@ app.post('/api/gallery', upload.single('image'), async (req, res) => {
     res.status(500).json({ error: 'Image upload failed.' });
   }
 });
-
-const pendingFile = path.join(__dirname, 'pendingMemories.json');
-const approvedFile = path.join(__dirname, 'approvedMemories.json');
 
 app.post('/api/memories', (req, res) => {
   const memory = req.body;
