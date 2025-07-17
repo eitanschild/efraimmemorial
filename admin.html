@@ -108,146 +108,134 @@
 
 </div>
 <script>
-      async function fetchMemories() {
-        const pendingRes = await fetch('https://efraimemorial-production.up.railway.app/api/memories/pending');
-        const approvedRes = await fetch('https://efraimemorial-production.up.railway.app/api/memories/approved');
+  // ---------------------- MEMORIES SECTION ----------------------
+  async function fetchMemories() {
+    const pendingRes = await fetch('https://efraimemorial-production.up.railway.app/api/memories/pending');
+    const approvedRes = await fetch('https://efraimemorial-production.up.railway.app/api/memories/approved');
+    const pending = await pendingRes.json();
+    const approved = await approvedRes.json();
 
-        const pending = await pendingRes.json();
-        const approved = await approvedRes.json();
+    const pendingContainer = document.getElementById('memoryList');
+    const approvedContainer = document.getElementById('approvedList');
 
-        const pendingContainer = document.getElementById('memoryList');
-        const approvedContainer = document.getElementById('approvedList');
+    pendingContainer.innerHTML = '';
+    approvedContainer.innerHTML = '';
 
-        pendingContainer.innerHTML = '';
-        approvedContainer.innerHTML = '';
+    pending.forEach((memory) => {
+      const div = document.createElement('div');
+      div.className = 'bg-white p-6 rounded-xl shadow space-y-2';
 
-        pending.forEach((memory, index) => {
-          const div = document.createElement('div');
-          div.className = 'bg-white p-6 rounded-xl shadow space-y-2';
+      div.innerHTML = `
+        <input disabled value="${memory.name}" class="w-full border p-2 rounded bg-gray-100" />
+        <textarea disabled class="w-full border p-2 rounded h-24 bg-gray-100">${memory.message}</textarea>
+        <div class="flex justify-start flex-wrap gap-3 mt-2">
+          <button onclick="approveMemory(${memory.id})" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">אשר</button>
+          <button onclick="deleteMemory(${memory.id})" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">מחק</button>
+        </div>
+      `;
+      pendingContainer.appendChild(div);
+    });
 
-          div.innerHTML = `
-            <input id="name-${index}" value="${memory.name}" class="w-full border p-2 rounded" />
-            <textarea id="message-${index}" class="w-full border p-2 rounded h-24">${memory.message}</textarea>
-            <div class="flex justify-start flex-wrap gap-3 mt-2">
-              <button onclick="approveMemory(${index})" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">אשר</button>
-              <button onclick="editMemory(${index})" class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600">ערוך</button>
-              <button onclick="deleteMemory(${index})" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">מחק</button>
-            </div>
-          `;
-          pendingContainer.appendChild(div);
-        });
+    approved.forEach((mem) => {
+      const div = document.createElement('div');
+      div.className = 'bg-white p-6 rounded-xl shadow';
+      div.innerHTML = `
+        <p class="mb-2"><strong>שם:</strong> ${mem.name}</p>
+        <p class="mb-4"><strong>זיכרון:</strong> ${mem.message}</p>
+        <button onclick="deleteApproved(${mem.id})" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">מחק</button>
+      `;
+      approvedContainer.appendChild(div);
+    });
+  }
 
-        approved.forEach((mem, i) => {
-          const div = document.createElement('div');
-          div.className = 'bg-white p-6 rounded-xl shadow';
-          div.innerHTML = `
-            <p class="mb-2"><strong>שם:</strong> ${mem.name}</p>
-            <p class="mb-4"><strong>זיכרון:</strong> ${mem.message}</p>
-            <button onclick="deleteApproved(${i})" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">מחק</button>
-          `;
-          approvedContainer.appendChild(div);
-        });
-      }
-
-      async function fetchGallery() {
-        const pendingRes = await fetch('https://efraimemorial-production.up.railway.app/api/gallery/pending');
-        const approvedRes = await fetch('https://efraimemorial-production.up.railway.app/api/gallery/approved');
-        const pending = await pendingRes.json();
-        const approved = await approvedRes.json();
-
-        const pendingGallery = document.getElementById('pendingGallery');
-        const approvedGallery = document.getElementById('approvedGallery');
-        pendingGallery.innerHTML = '';
-        approvedGallery.innerHTML = '';
-
-        pending.forEach((item, i) => {
-          const div = document.createElement('div');
-          const src = item.url || `https://efraimemorial-production.up.railway.app/pending-gallery/${item.filename}`;
-          div.className = 'bg-white rounded-xl shadow overflow-hidden';
-          div.innerHTML = `
-            <img src="${src}" class="w-full h-64 object-cover" />
-            <div class="p-4">
-              <p class="mb-2">${item.caption || ''}</p>
-              <div class="flex gap-2">
-                <button onclick="approveGallery(${i})" class="bg-green-600 text-white px-3 py-1 rounded">אשר</button>
-                <button onclick="deleteGallery(${i})" class="bg-red-600 text-white px-3 py-1 rounded">מחק</button>
-              </div>
-            </div>
-          `;
-          pendingGallery.appendChild(div);
-        });
-
-        approved.forEach((item, i) => {
-          const div = document.createElement('div');
-          const src = item.url || `https://efraimemorial-production.up.railway.app/gallery/${item.filename}`;
-          div.className = 'bg-white rounded-xl shadow overflow-hidden';
-          div.innerHTML = `
-            <img src="${src}" class="w-full h-64 object-cover" />
-            <div class="p-4">
-              <p class="mb-2">${item.caption || ''}</p>
-              <button onclick="deleteApprovedGallery(${i})" class="bg-red-600 text-white px-3 py-1 rounded">מחק</button>
-            </div>
-          `;
-          approvedGallery.appendChild(div);
-        });
-      }
-
-      async function approveMemory(index) {
-        const res = await fetch('https://efraimemorial-production.up.railway.app/api/approve/' + index, { method: 'POST' });
-        if (res.ok) {
-          alert('הזיכרון אושר');
-          fetchMemories();
-        }
-      }
-
-      async function editMemory(index) {
-        const name = document.getElementById('name-' + index).value;
-        const message = document.getElementById('message-' + index).value;
-
-        await fetch('https://efraimemorial-production.up.railway.app/api/edit/' + index, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, message })
-        });
-
-        alert('הזיכרון עודכן');
-      }
-
-      async function deleteMemory(index) {
-        if (!confirm('למחוק זיכרון זה?')) return;
-        await fetch('https://efraimemorial-production.up.railway.app/api/delete/' + index, { method: 'POST' });
-        fetchMemories();
-      }
-
-      async function deleteApproved(index) {
-        if (!confirm('למחוק זיכרון מאושר זה?')) return;
-        await fetch('https://efraimemorial-production.up.railway.app/api/delete-approved/' + index, { method: 'POST' });
-        fetchMemories();
-      }
-
-      async function approveGallery(index) {
-        const res = await fetch('https://efraimemorial-production.up.railway.app/api/gallery/approve/' + index, { method: 'POST' });
-        if (res.ok) {
-          alert('אושר');
-          fetchGallery();
-        }
-      }
-
-      async function deleteGallery(index) {
-        if (!confirm('למחוק תמונה זו?')) return;
-        await fetch('https://efraimemorial-production.up.railway.app/api/gallery/delete/' + index, { method: 'POST' });
-        fetchGallery();
-      }
-
-      async function deleteApprovedGallery(index) {
-        if (!confirm('למחוק תמונה מאושרת זו?')) return;
-        await fetch('https://efraimemorial-production.up.railway.app/api/gallery/delete-approved/' + index, { method: 'POST' });
-        fetchGallery();
-      }
-
+  async function approveMemory(id) {
+    const res = await fetch(`https://efraimemorial-production.up.railway.app/api/memories/approve/${id}`, { method: 'POST' });
+    if (res.ok) {
+      alert('הזיכרון אושר');
       fetchMemories();
+    }
+  }
+
+  async function deleteMemory(id) {
+    if (!confirm('למחוק זיכרון זה?')) return;
+    await fetch(`https://efraimemorial-production.up.railway.app/api/memories/delete/${id}`, { method: 'POST' });
+    fetchMemories();
+  }
+
+  async function deleteApproved(id) {
+    if (!confirm('למחוק זיכרון מאושר זה?')) return;
+    await fetch(`https://efraimemorial-production.up.railway.app/api/memories/delete/${id}`, { method: 'POST' });
+    fetchMemories();
+  }
+
+  // ---------------------- GALLERY SECTION (UNTOUCHED) ----------------------
+  async function fetchGallery() {
+    const pendingRes = await fetch('https://efraimemorial-production.up.railway.app/api/gallery/pending');
+    const approvedRes = await fetch('https://efraimemorial-production.up.railway.app/api/gallery/approved');
+    const pending = await pendingRes.json();
+    const approved = await approvedRes.json();
+
+    const pendingGallery = document.getElementById('pendingGallery');
+    const approvedGallery = document.getElementById('approvedGallery');
+    pendingGallery.innerHTML = '';
+    approvedGallery.innerHTML = '';
+
+    pending.forEach((item, i) => {
+      const div = document.createElement('div');
+      const src = item.url || `https://efraimemorial-production.up.railway.app/pending-gallery/${item.filename}`;
+      div.className = 'bg-white rounded-xl shadow overflow-hidden';
+      div.innerHTML = `
+        <img src="${src}" class="w-full h-64 object-cover" />
+        <div class="p-4">
+          <p class="mb-2">${item.caption || ''}</p>
+          <div class="flex gap-2">
+            <button onclick="approveGallery(${i})" class="bg-green-600 text-white px-3 py-1 rounded">אשר</button>
+            <button onclick="deleteGallery(${i})" class="bg-red-600 text-white px-3 py-1 rounded">מחק</button>
+          </div>
+        </div>
+      `;
+      pendingGallery.appendChild(div);
+    });
+
+    approved.forEach((item, i) => {
+      const div = document.createElement('div');
+      const src = item.url || `https://efraimemorial-production.up.railway.app/gallery/${item.filename}`;
+      div.className = 'bg-white rounded-xl shadow overflow-hidden';
+      div.innerHTML = `
+        <img src="${src}" class="w-full h-64 object-cover" />
+        <div class="p-4">
+          <p class="mb-2">${item.caption || ''}</p>
+          <button onclick="deleteApprovedGallery(${i})" class="bg-red-600 text-white px-3 py-1 rounded">מחק</button>
+        </div>
+      `;
+      approvedGallery.appendChild(div);
+    });
+  }
+
+  async function approveGallery(index) {
+    const res = await fetch('https://efraimemorial-production.up.railway.app/api/gallery/approve/' + index, { method: 'POST' });
+    if (res.ok) {
+      alert('אושר');
       fetchGallery();
-    </script>
+    }
+  }
+
+  async function deleteGallery(index) {
+    if (!confirm('למחוק תמונה זו?')) return;
+    await fetch('https://efraimemorial-production.up.railway.app/api/gallery/delete/' + index, { method: 'POST' });
+    fetchGallery();
+  }
+
+  async function deleteApprovedGallery(index) {
+    if (!confirm('למחוק תמונה מאושרת זו?')) return;
+    await fetch('https://efraimemorial-production.up.railway.app/api/gallery/delete-approved/' + index, { method: 'POST' });
+    fetchGallery();
+  }
+
+  fetchMemories();
+  fetchGallery();
+</script>
+
 <!-- כתבי אפרים Section -->
 <section class="py-16 px-6 bg-white border-t border-gray-200">
 <div class="max-w-2xl mx-auto">
