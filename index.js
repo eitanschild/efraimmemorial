@@ -102,7 +102,6 @@ app.use(cors({
       callback(new Error('Not allowed by CORS'));
     }
   },
-  origin: 'https://www.ephraimjackman.com',
   credentials: true 
 }));
 
