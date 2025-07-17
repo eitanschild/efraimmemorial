@@ -148,23 +148,23 @@
     });
   }
 
-  async function approveMemory(id) {
-    const res = await fetch(`https://efraimemorial-production.up.railway.app/api/memories/approve/${id}`, { method: 'POST' });
-    if (res.ok) {
-      alert('הזיכרון אושר');
-      fetchMemories();
-    }
-  }
-
-  async function deleteMemory(id) {
-    if (!confirm('למחוק זיכרון זה?')) return;
-    await fetch(`https://efraimemorial-production.up.railway.app/api/memories/delete/${id}`, { method: 'POST' });
+async function approveMemory(id) {
+  const res = await fetch(`${API_BASE}/api/memories/approve/${id}`, { method: 'POST' });
+  if (res.ok) {
+    alert('הזיכרון אושר');
     fetchMemories();
   }
+}
+
+async function deleteMemory(id) {
+  if (!confirm('למחוק זיכרון זה?')) return;
+  await fetch(`${API_BASE}/api/memories/delete/${id}`, { method: 'POST' });
+  fetchMemories();
+}
 
   async function deleteApproved(id) {
     if (!confirm('למחוק זיכרון מאושר זה?')) return;
-    await fetch(`https://efraimemorial-production.up.railway.app/api/memories/delete/${id}`, { method: 'POST' });
+    await fetch(`${API_BASE}/api/memories/delete/${id}`, { method: 'POST' });
     fetchMemories();
   }
 
