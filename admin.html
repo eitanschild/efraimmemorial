@@ -110,72 +110,110 @@
 <script>
   // ---------------------- MEMORIES SECTION ----------------------
   async function fetchMemories() {
-    const pendingRes = await fetch('https://efraimemorial-production.up.railway.app/api/memories/pending');
-    const approvedRes = await fetch('https://efraimemorial-production.up.railway.app/api/memories/approved');
-    const pending = await pendingRes.json();
-    const approved = await approvedRes.json();
+  let pending = [];
+  let approved = [];
 
-    const pendingContainer = document.getElementById('memoryList');
-    const approvedContainer = document.getElementById('approvedList');
+  try {
+    const [pendingRes, approvedRes] = await Promise.all([
+      fetch('https://efraimemorial-production.up.railway.app/api/memories/pending', {
+        credentials: 'include'
+      }),
+      fetch('https://efraimemorial-production.up.railway.app/api/memories/approved', {
+        credentials: 'include'
+      })
+    ]);
 
-    pendingContainer.innerHTML = '';
-    approvedContainer.innerHTML = '';
-
-    pending.forEach((memory) => {
-      const div = document.createElement('div');
-      div.className = 'bg-white p-6 rounded-xl shadow space-y-2';
-
-      div.innerHTML = `
-        <input disabled value="${memory.name}" class="w-full border p-2 rounded bg-gray-100" />
-        <textarea disabled class="w-full border p-2 rounded h-24 bg-gray-100">${memory.message}</textarea>
-        <div class="flex justify-start flex-wrap gap-3 mt-2">
-          <button onclick="approveMemory(${memory.id})" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">אשר</button>
-          <button onclick="deleteMemory(${memory.id})" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">מחק</button>
-        </div>
-      `;
-      pendingContainer.appendChild(div);
-    });
-
-    approved.forEach((mem) => {
-      const div = document.createElement('div');
-      div.className = 'bg-white p-6 rounded-xl shadow';
-      div.innerHTML = `
-        <p class="mb-2"><strong>שם:</strong> ${mem.name}</p>
-        <p class="mb-4"><strong>זיכרון:</strong> ${mem.message}</p>
-        <button onclick="deleteApproved(${mem.id})" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">מחק</button>
-      `;
-      approvedContainer.appendChild(div);
-    });
+    if (pendingRes.ok) {
+      pending = await pendingRes.json();
+    }
+    if (approvedRes.ok) {
+      approved = await approvedRes.json();
+    }
+  } catch (err) {
+    console.error("Error fetching memories:", err);
   }
 
-  async function approveMemory(id) {
-  const res = await fetch(`https://efraimemorial-production.up.railway.app/api/memories/approve/${id}`, {
-    method: 'POST',
-    credentials: 'include'  // ✅ ADD THIS LINE
+  const pendingContainer = document.getElementById('memoryList');
+  const approvedContainer = document.getElementById('approvedList');
+
+  pendingContainer.innerHTML = '';
+  approvedContainer.innerHTML = '';
+
+  pending.forEach((memory) => {
+    const div = document.createElement('div');
+    div.className = 'bg-white p-6 rounded-xl shadow space-y-2';
+
+    div.innerHTML = `
+      <input disabled value="${memory.name}" class="w-full border p-2 rounded bg-gray-100" />
+      <textarea disabled class="w-full border p-2 rounded h-24 bg-gray-100">${memory.message}</textarea>
+      <div class="flex justify-start flex-wrap gap-3 mt-2">
+        <button onclick="approveMemory(${memory.id})" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">אשר</button>
+        <button onclick="deleteMemory(${memory.id})" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">מחק</button>
+      </div>
+    `;
+    pendingContainer.appendChild(div);
   });
-  if (res.ok) {
-    alert('הזיכרון אושר');
-    fetchMemories();
+
+  approved.forEach((mem) => {
+    const div = document.createElement('div');
+    div.className = 'bg-white p-6 rounded-xl shadow';
+    div.innerHTML = `
+      <p class="mb-2"><strong>שם:</strong> ${mem.name}</p>
+      <p class="mb-4"><strong>זיכרון:</strong> ${mem.message}</p>
+      <button onclick="deleteApproved(${mem.id})" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">מחק</button>
+    `;
+    approvedContainer.appendChild(div);
+  });
+}
+
+async function approveMemory(id) {
+  try {
+    const res = await fetch(`https://efraimemorial-production.up.railway.app/api/memories/approve/${id}`, {
+      method: 'POST',
+      credentials: 'include'
+    });
+    if (res.ok) {
+      fetchMemories();
+    } else {
+      alert('אישור נכשל');
+    }
+  } catch (err) {
+    console.error('Approve failed:', err);
   }
 }
 
 async function deleteMemory(id) {
   if (!confirm('למחוק זיכרון זה?')) return;
-  await fetch(`https://efraimemorial-production.up.railway.app/api/memories/delete/${id}`, {
-    method: 'POST',
-    credentials: 'include'  // ✅ ADD THIS LINE
-  });
-  fetchMemories();
+  try {
+    const res = await fetch(`https://efraimemorial-production.up.railway.app/api/memories/delete/${id}`, {
+      method: 'POST',
+      credentials: 'include'
+    });
+    if (res.ok) {
+      fetchMemories();
+    } else {
+      alert('מחיקה נכשלה');
+    }
+  } catch (err) {
+    console.error('Delete failed:', err);
+  }
 }
-
 
 async function deleteApproved(id) {
   if (!confirm('למחוק זיכרון מאושר זה?')) return;
-  await fetch(`https://efraimemorial-production.up.railway.app/api/memories/delete/${id}`, {
-    method: 'POST',
-    credentials: 'include'  // ✅ ADD THIS LINE
-  });
-  fetchMemories();
+  try {
+    const res = await fetch(`https://efraimemorial-production.up.railway.app/api/memories/delete/${id}`, {
+      method: 'POST',
+      credentials: 'include'
+    });
+    if (res.ok) {
+      fetchMemories();
+    } else {
+      alert('מחיקה נכשלה');
+    }
+  } catch (err) {
+    console.error('Delete approved failed:', err);
+  }
 }
 
 
