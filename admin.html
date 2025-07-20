@@ -444,34 +444,30 @@ async function deleteApproved(id) {
       }
     }
   
-    // ✅ This makes it run
     window.addEventListener('DOMContentLoaded', loadAllKtavim);
-  </script>
+</script>
   
 
+<script>
+  async function loadCloudinaryUsage() {
+   try {
+      const res = await fetch('https://efraimemorial-production.up.railway.app/api/cloudinary/usage');
+      const usage = await res.json();
 
-async function loadCloudinaryUsage() {
-  try {
-    const res = await fetch('https://efraimemorial-production.up.railway.app/api/cloudinary/usage');
-    const usage = await res.json();
+      const usedBytes = usage.total_storage_used_bytes;
+      const limitBytes = usage.storage_limit_bytes;
 
-    const usedBytes = usage.total_storage_used_bytes;
-    const limitBytes = usage.storage_limit_bytes;
+      const percent = ((usedBytes / limitBytes) * 100).toFixed(1);
+      const usedGB = (usedBytes / 1e9).toFixed(2);
+      const limitGB = (limitBytes / 1e9).toFixed(2);
 
-    const percent = ((usedBytes / limitBytes) * 100).toFixed(1);
-    const usedGB = (usedBytes / 1e9).toFixed(2);
-    const limitGB = (limitBytes / 1e9).toFixed(2);
-
-    document.getElementById('usageBar').style.width = `${percent}%`;
-    document.getElementById('usageText').textContent = `${usedGB}GB מתוך ${limitGB}GB בשימוש (${percent}%)`;
-  } catch (err) {
-    console.error('Usage fetch failed:', err);
-    document.getElementById('cloudUsage').style.display = 'none';
+      document.getElementById('usageBar').style.width = `${percent}%`;
+      document.getElementById('usageText').textContent = `${usedGB}GB מתוך ${limitGB}GB בשימוש (${percent}%)`;
+    } catch (err) {
+      console.error('Usage fetch failed:', err);
+     document.getElementById('cloudUsage').style.display = 'none';
+    }
   }
-}
 
-window.addEventListener('DOMContentLoaded', loadCloudinaryUsage);
-
-
-  window.addEventListener('DOMContentLoaded', loadAllKtavim);
+  window.addEventListener('DOMContentLoaded', loadCloudinaryUsage);
 </script>
