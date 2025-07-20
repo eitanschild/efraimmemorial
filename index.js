@@ -9,13 +9,6 @@ const ktavimFile = path.join(__dirname, 'ktavim.json');
 const memoriesFile = path.join(__dirname, 'approvedMemories.json');
 const app = express();
 
-const { Pool } = require('pg');
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-});
-
-
 // Allow only your Vercel frontend
 const allowedOrigins = [
   'https://www.ephraimjackman.com',
@@ -35,6 +28,12 @@ app.use(cors({
   methods: ['GET', 'POST', 'DELETE', 'PUT', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+const { Pool } = require('pg');
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+});
 
 
 app.use(bodyParser.json());
