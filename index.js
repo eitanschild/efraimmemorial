@@ -15,8 +15,10 @@ app.use(cors({
     const allowedOrigins = [
       'https://www.ephraimjackman.com',
       'https://efraimmemorial-frontend.vercel.app',
-      'http://localhost:3000'
+      'http://localhost:3000',
+      'https://efraimemorial-production.up.railway.app'  // ✅ this was missing
     ];
+    
 
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
