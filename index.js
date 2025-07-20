@@ -18,6 +18,7 @@ app.use(cors({
       'http://localhost:3000',
       'https://efraimemorial-production.up.railway.app'  // ✅ this was missing
     ];
+
     
 
     if (!origin || allowedOrigins.includes(origin)) {
