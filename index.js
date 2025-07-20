@@ -574,7 +574,7 @@ app.post('/api/ktavim', async (req, res) => {
 app.get('/api/ktavim', async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT id, title, content, FROM ktavim WHERE approved = true ORDER BY date DESC'
+      'SELECT id, title, content, created_at AS date FROM ktavim WHERE approved = true ORDER BY date DESC'
     );
     res.json(result.rows);
   } catch (err) {
