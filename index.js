@@ -20,15 +20,22 @@ const pool = new Pool({
 const allowedOrigins = [
   'https://www.ephraimjackman.com',
   'https://efraimmemorial-frontend.vercel.app',
-  'http://localhost:3000',
-  undefined  // allow direct server calls (e.g., curl or mobile)
+  'http://localhost:3000'
 ];
 
 app.use(cors({
-  origin: '*', // ← TEMP: allow all domains
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
   methods: ['GET', 'POST', 'DELETE', 'PUT', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
 
 app.use(bodyParser.json());
 
