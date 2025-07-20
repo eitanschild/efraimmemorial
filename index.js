@@ -9,18 +9,19 @@ const ktavimFile = path.join(__dirname, 'ktavim.json');
 const memoriesFile = path.join(__dirname, 'approvedMemories.json');
 const app = express();
 
-// Allow only your Vercel frontend
-const allowedOrigins = [
-  'https://www.ephraimjackman.com',
-  'https://efraimmemorial-frontend.vercel.app',
-  'http://localhost:3000'
-];
 
 app.use(cors({
   origin: function (origin, callback) {
+    const allowedOrigins = [
+      'https://www.ephraimjackman.com',
+      'https://efraimmemorial-frontend.vercel.app',
+      'http://localhost:3000'
+    ];
+
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
+      console.warn('❌ Blocked by CORS:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -28,6 +29,7 @@ app.use(cors({
   methods: ['GET', 'POST', 'DELETE', 'PUT', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
 
 const { Pool } = require('pg');
 const pool = new Pool({
