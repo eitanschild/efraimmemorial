@@ -52,7 +52,7 @@ app.post('/api/memories', async (req, res) => {
       'INSERT INTO memories (name, message, created_at, approved) VALUES ($1, $2, CURRENT_DATE, false)',
       [name, message]
     );
-        
+
     res.status(201).json({ success: true });
   } catch (err) {
     console.error('Error inserting memory:', err);
@@ -84,13 +84,10 @@ app.get('/api/memories/pending', async (req, res) => {
 });
 
 app.post('/api/memories/approve/:id', async (req, res) => {
-  const { id } = req.params;
+  const id = parseInt(req.params.id, 10); // 💥 Cast here
 
   try {
-    await pool.query(
-      'UPDATE memories SET approved = true WHERE id = $1',
-      [id]
-    );
+    await pool.query('UPDATE memories SET approved = true WHERE id = $1', [id]);
     res.json({ success: true });
   } catch (err) {
     console.error('Error approving memory:', err);
@@ -99,7 +96,7 @@ app.post('/api/memories/approve/:id', async (req, res) => {
 });
 
 app.post('/api/memories/delete/:id', async (req, res) => {
-  const { id } = req.params;
+  const id = parseInt(req.params.id, 10); // 💥 Cast here
 
   try {
     await pool.query('DELETE FROM memories WHERE id = $1', [id]);
