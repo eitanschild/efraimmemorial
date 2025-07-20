@@ -333,18 +333,6 @@ app.get('/api/memories/approved', (req, res) => {
 
 
 
-app.post('/api/ktavim/approve/:index', (req, res) => {
-  const data = JSON.parse(fs.readFileSync(ktavimFile));
-  const idx = parseInt(req.params.index);
-  if (data[idx]) {
-    data[idx].approved = true;
-    fs.writeFileSync(ktavimFile, JSON.stringify(data, null, 2));
-    res.sendStatus(200);
-  } else {
-    res.status(404).send('Not found');
-  }
-});
-
 const axios = require('axios');
 
 app.get('/api/cloudinary/usage', async (req, res) => {
@@ -564,59 +552,47 @@ app.get('/api/search', (req, res) => {
 
 
 // --- כתבי אפרים Routes ---
-
-app.get('/api/ktavim', (req, res) => {
-  if (!fs.existsSync(ktavimFile)) {
-    return res.json([]);
-  }
-
-  try {
-    const data = JSON.parse(fs.readFileSync(ktavimFile));
-    const approved = data.filter(k => k.approved);
-    console.log("✅ /api/ktavim called — returning approved only:");
-    console.log(approved);
-    res.json(approved);
-  } catch (err) {
-    console.error("❌ Failed to read or parse ktavim.json:", err);
-    res.status(500).json({ error: 'Failed to load ktavim' });
-  }
-});
-
-
-app.post('/api/ktavim', (req, res) => {
+app.post('/api/ktavim', async (req, res) => {
   const { title, content } = req.body;
   if (!title || !content) {
     return res.status(400).json({ error: 'Missing fields' });
   }
 
-  let data = [];
-  if (fs.existsSync(ktavimFile)) {
-    data = JSON.parse(fs.readFileSync(ktavimFile));
-  }
-
-  const newKtav = { title, content, approved: true };
-  data.push(newKtav);
-
   try {
-    fs.writeFileSync(ktavimFile, JSON.stringify(data, null, 2));
+    await pool.query(
+      'INSERT INTO ktavim (title, content, approved) VALUES ($1, $2, true)',
+      [title, content]
+    );
     res.json({ success: true });
   } catch (err) {
-    console.error("❌ Failed to save new ktav:", err);
-    res.status(500).json({ error: 'Failed to save' });
+    console.error('❌ Error saving ktav:', err);
+    res.status(500).json({ error: 'Failed to save ktav' });
   }
 });
 
-app.delete('/api/ktavim/:index', (req, res) => {
-  const index = parseInt(req.params.index);
-  if (isNaN(index)) return res.status(400).send('Invalid index');
 
-  const file = path.join(__dirname, 'ktavim.json');
-  if (!fs.existsSync(file)) return res.status(404).send('No ktavim data');
+app.get('/api/ktavim', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT id, title, content, date FROM ktavim WHERE approved = true ORDER BY date DESC'
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('❌ Error fetching ktavim:', err);
+    res.status(500).json({ error: 'Failed to fetch ktavim' });
+  }
+});
 
-  const data = JSON.parse(fs.readFileSync(file));
-  if (index < 0 || index >= data.length) return res.status(400).send('Index out of range');
 
-  data.splice(index, 1);
-  fs.writeFileSync(file, JSON.stringify(data, null, 2));
-  res.status(200).send('Deleted');
+app.delete('/api/ktavim/:id', async (req, res) => {
+  const id = parseInt(req.params.id);
+  if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
+
+  try {
+    await pool.query('DELETE FROM ktavim WHERE id = $1', [id]);
+    res.status(200).json({ message: 'Deleted' });
+  } catch (err) {
+    console.error('❌ Error deleting ktav:', err);
+    res.status(500).json({ error: 'Failed to delete ktav' });
+  }
 });

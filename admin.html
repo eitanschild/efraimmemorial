@@ -400,39 +400,51 @@ async function deleteApproved(id) {
 
 <script>
   async function loadAllKtavim() {
-    const res = await fetch('https://efraimemorial-production.up.railway.app/api/ktavim');
-    const data = await res.json();
-    const list = document.getElementById('ktavList');
-    list.innerHTML = '';
+    try {
+      const res = await fetch('https://efraimemorial-production.up.railway.app/api/ktavim');
+      const data = await res.json();
+      const list = document.getElementById('ktavList');
+      list.innerHTML = '';
 
-    data.forEach((item, index) => {
-      const li = document.createElement('li');
-      li.className = "bg-white p-4 rounded shadow";
+      data.forEach((item) => {
+        const li = document.createElement('li');
+        li.className = "bg-white p-4 rounded shadow";
 
-      li.innerHTML = `
-        <h3 class="text-lg font-bold mb-2">${item.title}</h3>
-        <p class="mb-2 whitespace-pre-line">${item.content}</p>
-        <button onclick="deleteKtav(${index})" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-500">מחק</button>
-      `;
+        li.innerHTML = `
+          <h3 class="text-lg font-bold mb-2">${item.title}</h3>
+          <p class="mb-2 whitespace-pre-line">${item.content}</p>
+          <p class="text-sm text-gray-500">תאריך: ${item.date}</p>
+          <button onclick="deleteKtav(${item.id})" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-500">מחק</button>
+        `;
 
-      list.appendChild(li);
-    });
+        list.appendChild(li);
+      });
+    } catch (err) {
+        console.error("❌ Failed to load ktavim:", err);
+    }
   }
 
-  async function deleteKtav(index) {
-  const confirmed = confirm("האם אתה בטוח שברצונך למחוק את הכתב?");
-  if (!confirmed) return;
 
-  const res = await fetch(`https://efraimemorial-production.up.railway.app/api/ktavim/${index}`, {
-    method: 'DELETE'
-  });
+  async function deleteKtav(id) {
+    const confirmed = confirm("האם אתה בטוח שברצונך למחוק את הכתב?");
+    if (!confirmed) return;
 
-  if (res.ok) {
-    loadAllKtavim();
-  } else {
-    alert("שגיאה במחיקה");
+    try {
+      const res = await fetch(`https://efraimemorial-production.up.railway.app/api/ktavim/${id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+
+      if (res.ok) {
+        loadAllKtavim();
+      } else {
+        alert("שגיאה במחיקה");
+      }
+    } catch (err) {
+      console.error("❌ Delete failed:", err);
+    }
   }
-}
+
 
 
 
