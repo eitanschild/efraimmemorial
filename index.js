@@ -448,28 +448,42 @@ app.post('/api/gallery/delete-approved/:index', async (req, res) => {
   }
 });
 
-app.get('/api/search', (req, res) => {
+app.get('/api/search', async (req, res) => {
   const q = (req.query.q || '').toLowerCase().trim();
   if (!q) return res.json({ ktavim: [], memories: [], videos: [] });
 
-  // Load all data
-  const ktavim = fs.existsSync(ktavimFile) ? JSON.parse(fs.readFileSync(ktavimFile)) : [];
-  const memories = fs.existsSync(memoriesFile) ? JSON.parse(fs.readFileSync(memoriesFile)) : [];
-  const videos = fs.existsSync(videosFile) ? JSON.parse(fs.readFileSync(videosFile)) : [];
+  try {
+    const [ktavQuery, memQuery, vidQuery] = await Promise.all([
+      pool.query(`
+        SELECT id, title, content
+        FROM ktavim
+        WHERE approved = true AND (LOWER(title) LIKE $1 OR LOWER(content) LIKE $1)
+      `, [`%${q}%`]),
 
-  const filterText = (text) => text.toLowerCase().includes(q);
+      pool.query(`
+        SELECT id, name, message
+        FROM memories
+        WHERE approved = true AND (LOWER(name) LIKE $1 OR LOWER(message) LIKE $1)
+      `, [`%${q}%`]),
 
-  const ktavMatches = ktavim.filter(k => filterText(k.title) || filterText(k.content));
-  const memoryMatches = memories.filter(m => filterText(m.name || '') || filterText(m.message || ''));
-  const videoMatches = videos.filter(v => filterText(v.title || ''));
+      pool.query(`
+        SELECT id, title, youtubeid, section
+        FROM videos
+        WHERE LOWER(title) LIKE $1
+      `, [`%${q}%`])
+    ]);
 
-  res.json({
-    ktavim: ktavMatches,
-    memories: memoryMatches,
-    videos: videoMatches
-  });
+    res.json({
+      ktavim: ktavQuery.rows,
+      memories: memQuery.rows,
+      videos: vidQuery.rows
+    });
+
+  } catch (err) {
+    console.error('❌ Error in /api/search:', err);
+    res.status(500).json({ error: 'Search failed' });
+  }
 });
-
 
 
 
