@@ -4,9 +4,6 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const fs = require('fs');
 const session = require('express-session');
-const videosFile = path.join(__dirname, 'videos.json');
-const ktavimFile = path.join(__dirname, 'ktavim.json');
-const memoriesFile = path.join(__dirname, 'approvedMemories.json');
 const app = express();
 
 
@@ -162,13 +159,19 @@ app.post('/auth', (req, res) => {
 
 
 // GET all approved videos
-app.get('/api/videos', (req, res) => {
-  const data = fs.existsSync(videosFile) ? JSON.parse(fs.readFileSync(videosFile)) : [];
-  res.json(data);
+app.get('/api/videos', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT id, title, youtubeid, section FROM videos ORDER BY id DESC');
+    res.json(result.rows);
+  } catch (err) {
+    console.error('❌ Error fetching videos:', err);
+    res.status(500).json({ error: 'Failed to fetch videos' });
+  }
 });
 
+
 // POST a new video (admin only)
-app.post('/api/videos', (req, res) => {
+app.post('/api/videos', async (req, res) => {
   if (!req.session || !req.session.admin) {
     return res.status(403).json({ error: 'Unauthorized' });
   }
@@ -179,12 +182,18 @@ app.post('/api/videos', (req, res) => {
     return res.status(400).json({ error: 'Missing fields' });
   }
 
-  let data = fs.existsSync(videosFile) ? JSON.parse(fs.readFileSync(videosFile)) : [];
-
-  data.push({ title, youtubeId, section });
-  fs.writeFileSync(videosFile, JSON.stringify(data, null, 2));
-  res.json({ success: true });
+  try {
+    await pool.query(
+      'INSERT INTO videos (title, youtubeid, section) VALUES ($1, $2, $3)',
+      [title, youtubeId, section]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error('❌ Error inserting video:', err);
+    res.status(500).json({ error: 'Failed to save video' });
+  }
 });
+
 
 
 
@@ -290,47 +299,7 @@ app.post('/api/gallery', upload.single('image'), async (req, res) => {
   }
 });
 
-app.post('/api/memories', (req, res) => {
-  const memory = req.body;
-  const current = JSON.parse(fs.readFileSync(pendingFile));
-  current.push(memory);
-  fs.writeFileSync(pendingFile, JSON.stringify(current, null, 2));
-  res.status(200).json({ message: 'Memory submitted and pending approval' });
-});
-
-app.get('/api/pending', (req, res) => {
-  const data = JSON.parse(fs.readFileSync(pendingFile));
-  res.json(data);
-});
-
-app.post('/api/approve/:index', (req, res) => {
-  const index = parseInt(req.params.index);
-  const pending = JSON.parse(fs.readFileSync(pendingFile));
-  const approved = JSON.parse(fs.readFileSync(approvedFile));
-
-  if (index >= 0 && index < pending.length) {
-    const memory = pending.splice(index, 1)[0];
-    approved.push(memory);
-    fs.writeFileSync(pendingFile, JSON.stringify(pending, null, 2));
-    fs.writeFileSync(approvedFile, JSON.stringify(approved, null, 2));
-    res.status(200).json({ message: 'Memory approved' });
-  } else {
-    res.status(400).json({ error: 'Invalid index' });
-  }
-});
-
-app.get('/api/memories', (req, res) => {
-  const data = JSON.parse(fs.readFileSync(approvedFile));
-  res.json(data);
-});
-
 const PORT = process.env.PORT || 3001;
-
-app.get('/api/memories/approved', (req, res) => {
-  const data = JSON.parse(fs.readFileSync(approvedFile));
-  res.json(data);
-});
-
 
 
 const axios = require('axios');
@@ -353,74 +322,27 @@ app.get('/api/cloudinary/usage', async (req, res) => {
   }
 });
 
-app.post('/api/videos/delete/:index', (req, res) => {
+app.delete('/api/videos/:id', async (req, res) => {
   if (!req.session || !req.session.admin) {
     return res.status(403).json({ error: 'Unauthorized' });
   }
 
-  if (!fs.existsSync(videosFile)) {
-    return res.status(404).json({ error: 'File not found' });
+  const id = parseInt(req.params.id);
+  if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
+
+  try {
+    await pool.query('DELETE FROM videos WHERE id = $1', [id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('❌ Error deleting video:', err);
+    res.status(500).json({ error: 'Failed to delete video' });
   }
-
-  const index = parseInt(req.params.index);
-  const data = JSON.parse(fs.readFileSync(videosFile));
-
-  if (index < 0 || index >= data.length) {
-    return res.status(400).json({ error: 'Invalid index' });
-  }
-
-  data.splice(index, 1);
-  fs.writeFileSync(videosFile, JSON.stringify(data, null, 2));
-  res.json({ message: 'Video deleted' });
 });
+
 
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
-});
-
-// Edit a pending memory by index
-app.post('/api/edit/:index', (req, res) => {
-  const index = parseInt(req.params.index);
-  const { name, message } = req.body;
-  const pending = JSON.parse(fs.readFileSync(pendingFile));
-
-  if (index >= 0 && index < pending.length) {
-    pending[index] = { name, message };
-    fs.writeFileSync(pendingFile, JSON.stringify(pending, null, 2));
-    res.status(200).json({ message: 'Memory updated' });
-  } else {
-    res.status(400).json({ error: 'Invalid index' });
-  }
-});
-
-// Delete a pending memory by index
-app.post('/api/delete/:index', (req, res) => {
-  const index = parseInt(req.params.index);
-  const pending = JSON.parse(fs.readFileSync(pendingFile));
-
-  if (index >= 0 && index < pending.length) {
-    pending.splice(index, 1);
-    fs.writeFileSync(pendingFile, JSON.stringify(pending, null, 2));
-    res.status(200).json({ message: 'Memory deleted' });
-  } else {
-    res.status(400).json({ error: 'Invalid index' });
-  }
-});
-
-
-// Delete approved memory by index
-app.post('/api/delete-approved/:index', (req, res) => {
-  const index = parseInt(req.params.index);
-  const approved = JSON.parse(fs.readFileSync(approvedFile));
-
-  if (index >= 0 && index < approved.length) {
-    approved.splice(index, 1);
-    fs.writeFileSync(approvedFile, JSON.stringify(approved, null, 2));
-    res.status(200).json({ message: 'Approved memory deleted' });
-  } else {
-    res.status(400).json({ error: 'Invalid index' });
-  }
 });
 
 

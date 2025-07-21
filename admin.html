@@ -326,10 +326,13 @@ async function deleteApproved(id) {
   </div>
 </section>
 
+<!-- ✅ Video Upload Form Handler -->
 <script>
   const videoForm = document.getElementById('videoForm');
+
   videoForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+
     const title = document.getElementById('videoTitle').value;
     const youtubeId = document.getElementById('videoId').value;
     const section = document.getElementById('videoSection').value;
@@ -344,47 +347,52 @@ async function deleteApproved(id) {
     if (res.ok) {
       document.getElementById('videoResponse').classList.remove('hidden');
       videoForm.reset();
+      loadApprovedVideos(); // reload after upload
     } else {
       alert('שגיאה בשמירת הסרטון');
     }
   });
 </script>
 
+<!-- ✅ Load and Display Videos from DB -->
 <script>
   async function loadApprovedVideos() {
     const res = await fetch('https://efraimemorial-production.up.railway.app/api/videos');
     const data = await res.json();
     const container = document.getElementById('videoList');
     container.innerHTML = '';
-  
-    data.forEach((video, index) => {
+
+    data.forEach((video) => {
       const div = document.createElement('div');
       div.className = 'bg-white p-4 rounded-xl shadow flex items-center justify-between gap-4 flex-wrap';
-  
+
       div.innerHTML = `
         <div class="flex items-center gap-4">
-          <img src="https://img.youtube.com/vi/${video.youtubeId}/hqdefault.jpg" class="w-40 rounded-lg shadow" />
+          <img src="https://img.youtube.com/vi/${video.youtubeid}/hqdefault.jpg" class="w-40 rounded-lg shadow" />
           <div>
             <p class="text-lg font-semibold text-gray-800">${video.title}</p>
             <p class="text-sm text-gray-600">${video.section}</p>
           </div>
         </div>
-        <button onclick="deleteVideo(${index})" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">מחק</button>
+        <button onclick="deleteVideo(${video.id})" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">מחק</button>
       `;
-  
+
       container.appendChild(div);
     });
   }
-  
-  async function deleteVideo(index) {
+</script>
+
+<!-- ✅ Delete Video by ID -->
+<script>
+  async function deleteVideo(id) {
     const confirmed = confirm('למחוק את הסרטון הזה?');
     if (!confirmed) return;
-  
-    const res = await fetch(`https://efraimemorial-production.up.railway.app/api/videos/delete/${index}`, {
-      method: 'POST',
+
+    const res = await fetch(`https://efraimemorial-production.up.railway.app/api/videos/${id}`, {
+      method: 'DELETE',
       credentials: 'include'
     });
-  
+
     if (res.ok) {
       alert('הסרטון נמחק');
       loadApprovedVideos();
@@ -392,11 +400,9 @@ async function deleteApproved(id) {
       alert('שגיאה במחיקת הסרטון');
     }
   }
-  
-  window.addEventListener('DOMContentLoaded', loadApprovedVideos);
-  </script>
-  
 
+  window.addEventListener('DOMContentLoaded', loadApprovedVideos);
+</script>
 
   <script>
     async function loadAllKtavim() {
