@@ -5,6 +5,8 @@ const bodyParser = require('body-parser');
 const fs = require('fs');
 const session = require('express-session');
 const app = express();
+const multer = require('multer');
+const staticGalleryUpload = multer({ dest: 'temp_uploads/' });
 
 
 app.use(cors({
@@ -228,99 +230,11 @@ app.post('/logout', (req, res) => {
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// You no longer use these folders, but if still present:
-app.use('/pending-gallery', express.static(path.join(__dirname, 'pending-gallery')));
-app.use('/gallery', express.static(path.join(__dirname, 'gallery')));
-
-// Multer for temp uploads
-const multer = require('multer');
-const upload = multer({ dest: 'temp_uploads/' });
-
-// Cloudinary config with validation
-const cloudinary = require('cloudinary').v2;
-
-if (
-  !process.env.CLOUDINARY_CLOUD_NAME ||
-  !process.env.CLOUDINARY_API_KEY ||
-  !process.env.CLOUDINARY_API_SECRET
-) {
-  console.error('❌ Missing Cloudinary environment variables');
-  process.exit(1);
-}
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
-});
-
-// Gallery upload route with 5MB limit
-app.post('/api/gallery', upload.single('image'), async (req, res) => {
-  try {
-    const file = req.file;
-
-    if (!file) {
-      return res.status(400).json({ error: 'No file uploaded' });
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      fs.unlinkSync(file.path); // delete oversized temp file
-      return res.status(400).json({ error: 'Image too large. Max 5MB allowed.' });
-    }
-
-    const caption = req.body.caption || '';
-    const uploader = req.body.uploader || 'לא ידוע';
-
-    const result = await cloudinary.uploader.upload(file.path, {
-      folder: 'efraim-gallery',
-      use_filename: true
-    });
-
-    fs.unlinkSync(file.path); // delete temp file after upload
-
-    const pendingPath = path.join(__dirname, 'pending-gallery.json');
-    const pending = fs.existsSync(pendingPath)
-      ? JSON.parse(fs.readFileSync(pendingPath, 'utf-8'))
-      : [];
-
-    pending.push({
-      url: result.secure_url,
-      public_id: result.public_id,
-      caption,
-      uploader
-    });
-
-    fs.writeFileSync(pendingPath, JSON.stringify(pending, null, 2));
-    res.status(200).json({ message: 'Uploaded and pending approval.' });
-
-  } catch (error) {
-    console.error('Upload error:', error);
-    res.status(500).json({ error: 'Image upload failed.' });
-  }
-});
-
 const PORT = process.env.PORT || 3001;
 
 
 const axios = require('axios');
 
-app.get('/api/cloudinary/usage', async (req, res) => {
-  try {
-    const result = await axios.get(
-      `https://api.cloudinary.com/v1_1/${process.env.CLOUDINARY_CLOUD_NAME}/usage`,
-      {
-        auth: {
-          username: process.env.CLOUDINARY_API_KEY,
-          password: process.env.CLOUDINARY_API_SECRET
-        }
-      }
-    );
-    res.json(result.data);
-  } catch (err) {
-    console.error('Cloudinary usage error:', err.response?.data || err.message);
-    res.status(500).json({ error: 'Failed to fetch usage' });
-  }
-});
 
 app.delete('/api/videos/:id', async (req, res) => {
   if (!req.session || !req.session.admin) {
@@ -339,114 +253,36 @@ app.delete('/api/videos/:id', async (req, res) => {
   }
 });
 
+app.use('/static-gallery', express.static(path.join(__dirname, 'static-gallery')));
 
+app.post('/api/static-gallery', staticGalleryUpload.single('image'), (req, res) => {
+  if (!req.session || !req.session.admin) {
+    return res.status(403).json({ error: 'Unauthorized' });
+  }
+  const fs = require('fs');
+  const oldPath = req.file.path;
+  const targetFile = req.body.target;
+
+  if (!targetFile || !/^img[1-6]\\.jpg$/.test(targetFile)) {
+    fs.unlinkSync(oldPath);
+    return res.status(400).json({ error: 'Invalid target image name' });
+  }
+
+  const newPath = path.join(__dirname, 'static-gallery', targetFile);
+
+  fs.rename(oldPath, newPath, (err) => {
+    if (err) {
+      console.error('Rename error:', err);
+      return res.status(500).json({ error: 'Failed to replace image' });
+    }
+    res.json({ success: true });
+  });
+});
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
 
-
-// Get pending gallery items
-app.get('/api/gallery/pending', (req, res) => {
-  const pending = JSON.parse(fs.readFileSync(path.join(__dirname, 'pending-gallery.json')));
-  res.json(pending);
-});
-
-// Get approved gallery items
-app.get('/api/gallery/approved', (req, res) => {
-  const approved = JSON.parse(fs.readFileSync(path.join(__dirname, 'gallery.json')));
-  res.json(approved);
-});
-
-// Approve gallery image
-app.post('/api/gallery/approve/:index', (req, res) => {
-  const index = parseInt(req.params.index);
-  const pendingPath = path.join(__dirname, 'pending-gallery.json');
-  const approvedPath = path.join(__dirname, 'gallery.json');
-
-  const pendingList = JSON.parse(fs.readFileSync(pendingPath));
-  const approvedList = fs.existsSync(approvedPath)
-    ? JSON.parse(fs.readFileSync(approvedPath))
-    : [];
-
-  if (index >= 0 && index < pendingList.length) {
-    const item = pendingList.splice(index, 1)[0];
-    approvedList.push(item);
-
-    fs.writeFileSync(pendingPath, JSON.stringify(pendingList, null, 2));
-    fs.writeFileSync(approvedPath, JSON.stringify(approvedList, null, 2));
-    res.status(200).json({ message: 'Gallery item approved' });
-  } else {
-    res.status(400).json({ error: 'Invalid index' });
-  }
-});
-
-  //Delete Pending Gallery Item
-app.post('/api/gallery/delete/:index', async (req, res) => {
-  const index = parseInt(req.params.index);
-  const pendingPath = path.join(__dirname, 'pending-gallery.json');
-  const pendingList = fs.existsSync(pendingPath)
-    ? JSON.parse(fs.readFileSync(pendingPath, 'utf-8'))
-    : [];
-
-  if (index >= 0 && index < pendingList.length) {
-    const item = pendingList.splice(index, 1)[0];
-
-    // Delete from Cloudinary if public_id exists
-    if (item.public_id) {
-      try {
-        await cloudinary.uploader.destroy(item.public_id);
-      } catch (err) {
-        console.error('Cloudinary delete failed (pending):', err.message);
-      }
-    }
-
-    // Delete local file if legacy item
-    if (item.filename) {
-      const filePath = path.join(__dirname, 'pending-gallery', item.filename);
-      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-    }
-
-    fs.writeFileSync(pendingPath, JSON.stringify(pendingList, null, 2));
-    res.status(200).json({ message: 'Pending gallery item deleted' });
-  } else {
-    res.status(400).json({ error: 'Invalid index' });
-  }
-});
-
-
-// Delete approved gallery item
-app.post('/api/gallery/delete-approved/:index', async (req, res) => {
-  const index = parseInt(req.params.index);
-  const approvedPath = path.join(__dirname, 'gallery.json');
-  const approvedList = fs.existsSync(approvedPath)
-    ? JSON.parse(fs.readFileSync(approvedPath, 'utf-8'))
-    : [];
-
-  if (index >= 0 && index < approvedList.length) {
-    const item = approvedList.splice(index, 1)[0];
-
-    // Delete from Cloudinary if applicable
-    if (item.public_id) {
-      try {
-        await cloudinary.uploader.destroy(item.public_id);
-      } catch (err) {
-        console.error('Cloudinary delete failed (approved):', err.message);
-      }
-    }
-
-    // Delete local file if legacy
-    if (item.filename) {
-      const filePath = path.join(__dirname, 'gallery', item.filename);
-      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-    }
-
-    fs.writeFileSync(approvedPath, JSON.stringify(approvedList, null, 2));
-    res.status(200).json({ message: 'Approved gallery item deleted' });
-  } else {
-    res.status(400).json({ error: 'Invalid index' });
-  }
-});
 
 app.get('/api/search', async (req, res) => {
   const q = (req.query.q || '').toLowerCase().trim();
