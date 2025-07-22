@@ -265,50 +265,6 @@ app.delete('/api/videos/:id', async (req, res) => {
 app.use('/static-gallery', express.static(path.join(__dirname, 'static-gallery')));
 
 
-app.post('/api/static-gallery', staticGalleryUpload.single('image'), (req, res) => {
-  if (!req.session || !req.session.admin) {
-    return res.status(403).json({ error: 'Unauthorized' });
-  }
-  const fs = require('fs');
-  const oldPath = req.file.path;
-  const targetFile = req.body.target;
-
-  if (!targetFile || !/^img[1-6]\\.jpg$/.test(targetFile)) {
-    fs.unlinkSync(oldPath);
-    return res.status(400).json({ error: 'Invalid target image name' });
-  }
-
-  const newPath = path.join(__dirname, 'static-gallery', targetFile);
-
-  fs.rename(oldPath, newPath, (err) => {
-    if (err) {
-      console.error('Rename error:', err);
-      return res.status(500).json({ error: 'Failed to replace image' });
-    }
-    res.json({ success: true });
-  });
-});
-
-app.post('/api/static-gallery/upload/:index', staticGalleryUpload.single('image'), (req, res) => {
-  const index = parseInt(req.params.index, 10);
-  if (isNaN(index) || index < 1 || index > 6) {
-    return res.status(400).json({ error: 'Invalid image index (must be 1–6)' });
-  }
-
-  const tempPath = req.file.path;
-  const targetPath = path.join(__dirname, 'static-gallery', `img${index}.jpg`);
-
-  fs.rename(tempPath, targetPath, (err) => {
-    if (err) {
-      console.error('❌ Failed to move image:', err);
-      return res.status(500).json({ error: 'Failed to save image' });
-    }
-
-    res.status(200).json({ success: true, url: `/static-gallery/img${index}.jpg` });
-  });
-});
-
-
 
 const staticGalleryPath = path.join(__dirname, 'static-gallery');
 const staticStorage = multer.diskStorage({
@@ -322,16 +278,51 @@ const staticStorage = multer.diskStorage({
 });
 const staticUpload = multer({ storage: staticStorage, limits: { fileSize: 5 * 1024 * 1024 } });
 
-// Serve static images
-app.use('/static-gallery', express.static(staticGalleryPath));
 
-// Upload image (admin only)
-app.post('/api/static-gallery', staticUpload.single('image'), (req, res) => {
+app.post('/api/static-gallery/:index', staticUpload.single('image'), (req, res) => {
   if (!req.session || !req.session.admin) {
     return res.status(403).json({ error: 'Unauthorized' });
   }
-  res.json({ success: true, filename: req.file.filename });
+
+  const index = parseInt(req.params.index, 10);
+  if (isNaN(index) || index < 1 || index > 6) {
+    return res.status(400).json({ error: 'Invalid image index (must be 1–6)' });
+  }
+
+  const caption = req.body.caption || '';
+  const uploader = req.body.uploader || '';
+  const tempPath = req.file.path;
+  const finalName = `img${index}.jpg`;
+  const targetPath = path.join(staticGalleryPath, finalName);
+
+  fs.rename(tempPath, targetPath, (err) => {
+    if (err) {
+      console.error('❌ Failed to move image:', err);
+      return res.status(500).json({ error: 'Failed to save image' });
+    }
+
+    // ✅ Update gallery.json
+    const galleryJsonPath = path.join(__dirname, 'gallery.json');
+    let gallery = [];
+
+    if (fs.existsSync(galleryJsonPath)) {
+      gallery = JSON.parse(fs.readFileSync(galleryJsonPath, 'utf-8'));
+    }
+
+    gallery[index - 1] = {
+      url: `/static-gallery/${finalName}`,
+      caption,
+      uploader
+    };
+
+    fs.writeFileSync(galleryJsonPath, JSON.stringify(gallery, null, 2));
+    res.status(200).json({ success: true });
+  });
 });
+
+// Serve static images
+app.use('/static-gallery', express.static(staticGalleryPath));
+
 
 // List all uploaded images
 app.get('/api/static-gallery', (req, res) => {
