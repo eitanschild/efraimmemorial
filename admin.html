@@ -68,29 +68,74 @@
 <!-- Separator from approved memories -->
 <hr class="my-12 border-t border-gray-300">
 
-<!-- Upload Gallery Image -->
-<section class="py-10 px-4 bg-white">
-  <div class="max-w-xl mx-auto">
-    <h2 class="text-2xl md:text-3xl font-bold text-blue-900 mb-6 text-center">העלה תמונה לגלריה</h2>
-    <form id="galleryForm" enctype="multipart/form-data" class="bg-gray-50 p-6 rounded-xl shadow space-y-4">
-      <input type="file" id="image" name="image" accept="image/*" required class="w-full p-3 border rounded-lg bg-white" />
-      <input type="text" id="uploader" name="uploader" placeholder="שמך (המשלח)" required class="w-full p-3 border rounded-lg" />
-      <input type="text" id="caption" name="caption" placeholder="כיתוב לתמונה (לא חובה)" class="w-full p-3 border rounded-lg" />
-      <button type="submit" class="w-full bg-blue-900 text-white py-3 rounded-lg hover:bg-blue-900/90 transition">שלח תמונה</button>
-
-      <div id="galleryLoading" class="flex justify-center items-center gap-2 text-blue-600 text-center hidden">
-        <svg class="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-        </svg>
-        שולח תמונה...
-      </div>
-
-      <p id="galleryResponse" class="text-green-600 text-center mt-4 hidden">התמונה נשלחה וממתינה לאישור</p>
-      <p id="galleryError" class="text-red-600 text-center mt-4 hidden">שגיאה בהעלאת התמונה</p>
-    </form>
+<!-- Static Gallery Image Slots -->
+<section class="py-16 px-6 bg-white border-t border-gray-200">
+  <div class="max-w-6xl mx-auto">
+    <h2 class="text-2xl md:text-3xl font-bold text-blue-900 mb-10 text-center">ניהול הגלריה הראשית</h2>
+    <div id="staticGallerySlots" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8"></div>
   </div>
 </section>
+
+<script>
+  async function loadStaticGallerySlots() {
+    const container = document.getElementById('staticGallerySlots');
+    container.innerHTML = '';
+
+    const res = await fetch('https://efraimemorial-production.up.railway.app/gallery.json');
+    const data = await res.json();
+
+    for (let i = 0; i < 6; i++) {
+      const slot = data[i] || { url: `/static-gallery/img${i+1}.jpg`, caption: '', uploader: '' };
+
+      const div = document.createElement('div');
+      div.className = 'bg-gray-50 p-4 rounded-xl shadow space-y-4';
+
+      div.innerHTML = `
+        <img src="${slot.url}" alt="תמונה ${i + 1}" class="w-full h-48 object-cover rounded">
+        <p class="text-sm text-gray-600">כיתוב: ${slot.caption || '---'}<br>משלח: ${slot.uploader || '---'}</p>
+        <form class="replace-form space-y-2" data-slot="${i + 1}" enctype="multipart/form-data">
+          <input type="file" name="image" accept="image/*" required class="w-full p-2 border rounded">
+          <input type="text" name="caption" placeholder="כיתוב חדש (לא חובה)" class="w-full p-2 border rounded">
+          <input type="text" name="uploader" placeholder="שמך (המשלח)" class="w-full p-2 border rounded">
+          <button type="submit" class="w-full bg-blue-900 text-white py-2 rounded hover:bg-blue-800 transition">החלף תמונה</button>
+        </form>
+        <p class="upload-status text-center text-sm text-green-600 hidden">✔️ התמונה עודכנה</p>
+      `;
+
+      container.appendChild(div);
+    }
+
+    document.querySelectorAll('.replace-form').forEach(form => {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const slot = form.dataset.slot;
+        const formData = new FormData(form);
+        const status = form.nextElementSibling;
+
+        status.classList.add('hidden');
+
+        const res = await fetch(`https://efraimemorial-production.up.railway.app/api/static-gallery/${slot}`, {
+          method: 'POST',
+          body: formData,
+          credentials: 'include'
+        });
+
+        if (res.ok) {
+          status.classList.remove('hidden');
+          loadStaticGallerySlots(); // reload updated image
+        } else {
+          status.textContent = 'שגיאה בהעלאה';
+          status.classList.remove('text-green-600');
+          status.classList.add('text-red-600');
+          status.classList.remove('hidden');
+        }
+      });
+    });
+  }
+
+  window.addEventListener('DOMContentLoaded', loadStaticGallerySlots);
+</script>
+
 
 
 <!-- Gallery Images -->
