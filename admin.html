@@ -286,16 +286,37 @@ async function deleteApproved(id) {
 </script>
 
 <!-- כתבי אפרים Section -->
-<section class="py-16 px-6 bg-white border-t border-gray-200">
-<div class="max-w-2xl mx-auto">
-<h2 class="text-2xl md:text-3xl font-bold text-blue-900 mb-6 text-center">הוספת כתב של אפרים</h2>
-<form class="bg-gray-50 p-6 rounded-xl shadow space-y-4" id="ktavForm">
-<input class="w-full p-3 border rounded-lg" id="ktavTitle" name="title" placeholder="כותרת הכתב" required="" type="text"/>
-<textarea class="w-full p-3 border rounded-lg" id="ktavContent" name="content" placeholder="תוכן הכתב" required="" rows="6"></textarea>
-<button class="w-full bg-blue-900 text-white py-3 rounded-lg hover:bg-blue-900 transition" type="submit">שמור כתב</button>
-<p class="text-green-600 text-center mt-4 hidden" id="ktavResponse">הכתב נשמר בהצלחה</p>
-</form>
-</div>
+<section class="py-10 px-6 bg-white">
+  <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+
+    <!-- Upload Image Form -->
+    <div>
+      <h2 class="text-2xl md:text-3xl font-bold text-blue-900 mb-6 text-center">העלה תמונה לגלריה</h2>
+      <form class="bg-gray-50 p-6 rounded-xl shadow space-y-4" enctype="multipart/form-data" id="galleryForm">
+        <input accept="image/*" class="w-full p-3 border rounded-lg bg-white" id="image" name="image" required type="file" />
+        <input class="w-full p-3 border rounded-lg" id="uploader" name="uploader" placeholder="שמך (המשלח)" required type="text" />
+        <input class="w-full p-3 border rounded-lg" id="caption" name="caption" placeholder="כיתוב לתמונה (לא חובה)" type="text" />
+        <button class="w-full bg-blue-900 text-white py-3 rounded-lg hover:bg-blue-900/90 transition" type="submit">שלח תמונה</button>
+        <div id="galleryLoading" class="flex justify-center items-center gap-2 text-blue-600 text-center hidden">
+          <svg class="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          שולח תמונה...
+        </div>
+        <p class="text-green-600 text-center mt-4 hidden" id="galleryResponse">התמונה נשלחה וממתינה לאישור</p>
+        <p class="text-red-600 text-center mt-4 hidden" id="galleryError">שגיאה בהעלאת התמונה</p>
+      </form>
+    </div>
+  <div class="max-w-2xl mx-auto">
+  <h2 class="text-2xl md:text-3xl font-bold text-blue-900 mb-6 text-center">הוספת כתב של אפרים</h2>
+  <form class="bg-gray-50 p-6 rounded-xl shadow space-y-4" id="ktavForm">
+  <input class="w-full p-3 border rounded-lg" id="ktavTitle" name="title" placeholder="כותרת הכתב" required="" type="text"/>
+  <textarea class="w-full p-3 border rounded-lg" id="ktavContent" name="content" placeholder="תוכן הכתב" required="" rows="6"></textarea>
+  <button class="w-full bg-blue-900 text-white py-3 rounded-lg hover:bg-blue-900 transition" type="submit">שמור כתב</button>
+  <p class="text-green-600 text-center mt-4 hidden" id="ktavResponse">הכתב נשמר בהצלחה</p>
+  </form>
+  </div>
 </section>
 <script>
   const ktavForm = document.getElementById('ktavForm');
@@ -326,25 +347,7 @@ async function deleteApproved(id) {
   </div>
 </section>
 
-      <!-- Upload Image Form -->
-      <div>
-        <h2 class="text-2xl md:text-3xl font-bold text-blue-900 mb-6 text-center">העלה תמונה לגלריה</h2>
-        <form class="bg-gray-50 p-6 rounded-xl shadow space-y-4" enctype="multipart/form-data" id="galleryForm">
-          <input accept="image/*" class="w-full p-3 border rounded-lg bg-white" id="image" name="image" required type="file" />
-          <input class="w-full p-3 border rounded-lg" id="uploader" name="uploader" placeholder="שמך (המשלח)" required type="text" />
-          <input class="w-full p-3 border rounded-lg" id="caption" name="caption" placeholder="כיתוב לתמונה (לא חובה)" type="text" />
-          <button class="w-full bg-blue-900 text-white py-3 rounded-lg hover:bg-blue-900/90 transition" type="submit">שלח תמונה</button>
-          <div id="galleryLoading" class="flex justify-center items-center gap-2 text-blue-600 text-center hidden">
-            <svg class="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-            </svg>
-            שולח תמונה...
-          </div>
-          <p class="text-green-600 text-center mt-4 hidden" id="galleryResponse">התמונה נשלחה וממתינה לאישור</p>
-          <p class="text-red-600 text-center mt-4 hidden" id="galleryError">שגיאה בהעלאת התמונה</p>
-        </form>
-      </div>
+
 
 <!-- ✅ Video Upload Form Handler -->
 <script>
