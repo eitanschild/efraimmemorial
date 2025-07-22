@@ -5,8 +5,6 @@ const bodyParser = require('body-parser');
 const fs = require('fs');
 const session = require('express-session');
 const app = express();
-const multer = require('multer');
-const staticGalleryUpload = multer({ dest: 'temp_uploads/' });
 
 
 app.use(cors({
@@ -227,6 +225,17 @@ app.post('/logout', (req, res) => {
   });
 });
 
+const multer = require('multer');
+const staticGalleryUpload = multer({
+  dest: 'static-gallery/',
+  limits: { fileSize: 15 * 1024 * 1024 }, // 15MB limit
+  fileFilter: (req, file, cb) => {
+    if (!file.mimetype.startsWith('image/')) {
+      return cb(new Error('Only image files are allowed!'));
+    }
+    cb(null, true);
+  }
+});
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -255,6 +264,7 @@ app.delete('/api/videos/:id', async (req, res) => {
 
 app.use('/static-gallery', express.static(path.join(__dirname, 'static-gallery')));
 
+
 app.post('/api/static-gallery', staticGalleryUpload.single('image'), (req, res) => {
   if (!req.session || !req.session.admin) {
     return res.status(403).json({ error: 'Unauthorized' });
@@ -278,6 +288,77 @@ app.post('/api/static-gallery', staticGalleryUpload.single('image'), (req, res) 
     res.json({ success: true });
   });
 });
+
+app.post('/api/static-gallery/upload/:index', staticGalleryUpload.single('image'), (req, res) => {
+  const index = parseInt(req.params.index, 10);
+  if (isNaN(index) || index < 1 || index > 6) {
+    return res.status(400).json({ error: 'Invalid image index (must be 1–6)' });
+  }
+
+  const tempPath = req.file.path;
+  const targetPath = path.join(__dirname, 'static-gallery', `img${index}.jpg`);
+
+  fs.rename(tempPath, targetPath, (err) => {
+    if (err) {
+      console.error('❌ Failed to move image:', err);
+      return res.status(500).json({ error: 'Failed to save image' });
+    }
+
+    res.status(200).json({ success: true, url: `/static-gallery/img${index}.jpg` });
+  });
+});
+
+
+
+const staticGalleryPath = path.join(__dirname, 'static-gallery');
+const staticStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, staticGalleryPath),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    const base = path.basename(file.originalname, ext);
+    const timestamp = Date.now();
+    cb(null, `${base}-${timestamp}${ext}`);
+  }
+});
+const staticUpload = multer({ storage: staticStorage, limits: { fileSize: 5 * 1024 * 1024 } });
+
+// Serve static images
+app.use('/static-gallery', express.static(staticGalleryPath));
+
+// Upload image (admin only)
+app.post('/api/static-gallery', staticUpload.single('image'), (req, res) => {
+  if (!req.session || !req.session.admin) {
+    return res.status(403).json({ error: 'Unauthorized' });
+  }
+  res.json({ success: true, filename: req.file.filename });
+});
+
+// List all uploaded images
+app.get('/api/static-gallery', (req, res) => {
+  fs.readdir(staticGalleryPath, (err, files) => {
+    if (err) return res.status(500).json({ error: 'Failed to read directory' });
+
+    const urls = files.map(name => ({
+      filename: name,
+      url: `/static-gallery/${name}`
+    }));
+    res.json(urls);
+  });
+});
+
+// Delete image
+app.delete('/api/static-gallery/:filename', (req, res) => {
+  if (!req.session || !req.session.admin) {
+    return res.status(403).json({ error: 'Unauthorized' });
+  }
+
+  const filePath = path.join(staticGalleryPath, req.params.filename);
+  fs.unlink(filePath, (err) => {
+    if (err) return res.status(500).json({ error: 'Failed to delete file' });
+    res.json({ success: true });
+  });
+});
+
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
