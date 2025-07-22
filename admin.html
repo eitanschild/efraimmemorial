@@ -45,7 +45,7 @@
 
 
 
-<!--loading bar-->
+<!-- Cloudinary Usage Bar -->
 <div id="cloudUsage" class="mb-10 max-w-xl mx-auto bg-white p-4 rounded-xl shadow text-center text-sm text-gray-700">
   <p class="mb-2 font-semibold">שימוש באחסון ענן (Cloudinary)</p>
   <div class="w-full h-4 bg-gray-200 rounded-full overflow-hidden">
@@ -54,35 +54,27 @@
   <p id="usageText" class="mt-2 text-xs text-gray-600"></p>
 </div>
 
-<style>
-      body {
-        font-family: 'Assistant', sans-serif;
-      }
-    </style>
-<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
-</head>
-<body class="bg-gray-100 text-gray-800 py-10 px-4">
-<div class="max-w-3xl mx-auto space-y-12">
-<h1 class="text-3xl font-bold text-blue-900 text-center">אישור מכתבים וזיכרונות</h1>
+<!-- Memory Approval Sections -->
 <section>
-<h2 class="text-xl font-semibold text-gray-700 mb-4">ממתינים לאישור</h2>
-<div class="space-y-6" id="memoryList"></div>
+  <h2 class="text-xl font-semibold text-gray-700 mb-4">ממתינים לאישור</h2>
+  <div id="memoryList" class="space-y-6"></div>
 </section>
-<section>
-<h2 class="text-xl font-semibold text-gray-700 mb-4">מאושרים להצגה</h2>
-<div class="space-y-6" id="approvedList"></div>
-</section>
-<section class="py-10 px-6 bg-white">
-  <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
 
-    <!-- Upload Image Form -->
+<section>
+  <h2 class="text-xl font-semibold text-gray-700 mb-4">מאושרים להצגה</h2>
+  <div id="approvedList" class="space-y-6"></div>
+</section>
+
+<!-- Upload Gallery Image -->
+<section class="py-16 px-6 bg-white">
+  <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
     <div>
       <h2 class="text-2xl md:text-3xl font-bold text-blue-900 mb-6 text-center">העלה תמונה לגלריה</h2>
-      <form class="bg-gray-50 p-6 rounded-xl shadow space-y-4" enctype="multipart/form-data" id="galleryForm">
-        <input accept="image/*" class="w-full p-3 border rounded-lg bg-white" id="image" name="image" required type="file" />
-        <input class="w-full p-3 border rounded-lg" id="uploader" name="uploader" placeholder="שמך (המשלח)" required type="text" />
-        <input class="w-full p-3 border rounded-lg" id="caption" name="caption" placeholder="כיתוב לתמונה (לא חובה)" type="text" />
-        <button class="w-full bg-blue-900 text-white py-3 rounded-lg hover:bg-blue-900/90 transition" type="submit">שלח תמונה</button>
+      <form id="galleryForm" enctype="multipart/form-data" class="bg-gray-50 p-6 rounded-xl shadow space-y-4">
+        <input type="file" id="image" name="image" accept="image/*" required class="w-full p-3 border rounded-lg bg-white" />
+        <input type="text" id="uploader" name="uploader" placeholder="שמך (המשלח)" required class="w-full p-3 border rounded-lg" />
+        <input type="text" id="caption" name="caption" placeholder="כיתוב לתמונה (לא חובה)" class="w-full p-3 border rounded-lg" />
+        <button type="submit" class="w-full bg-blue-900 text-white py-3 rounded-lg hover:bg-blue-900/90 transition">שלח תמונה</button>
         <div id="galleryLoading" class="flex justify-center items-center gap-2 text-blue-600 text-center hidden">
           <svg class="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -90,43 +82,51 @@
           </svg>
           שולח תמונה...
         </div>
-        <p class="text-green-600 text-center mt-4 hidden" id="galleryResponse">התמונה נשלחה וממתינה לאישור</p>
-        <p class="text-red-600 text-center mt-4 hidden" id="galleryError">שגיאה בהעלאת התמונה</p>
+        <p id="galleryResponse" class="text-green-600 text-center mt-4 hidden">התמונה נשלחה וממתינה לאישור</p>
+        <p id="galleryError" class="text-red-600 text-center mt-4 hidden">שגיאה בהעלאת התמונה</p>
       </form>
     </div>
-  </section>   
-<section>
-<h2 class="text-xl font-semibold text-gray-700 mb-4">תמונות ממתינות לאישור</h2>
-<div class="grid grid-cols-1 sm:grid-cols-2 gap-6" id="pendingGallery"></div>
+  </div>
 </section>
+
+<!-- Gallery Images -->
 <section>
-<h2 class="text-xl font-semibold text-gray-700 mt-12 mb-4">תמונות מאושרות בגלריה</h2>
-<div class="grid grid-cols-1 sm:grid-cols-2 gap-6" id="approvedGallery"></div>
+  <h2 class="text-xl font-semibold text-gray-700 mb-4">תמונות ממתינות לאישור</h2>
+  <div id="pendingGallery" class="grid grid-cols-1 sm:grid-cols-2 gap-6"></div>
 </section>
-<!-- הוספת סרטון חדש -->
+
+<section>
+  <h2 class="text-xl font-semibold text-gray-700 mt-12 mb-4">תמונות מאושרות בגלריה</h2>
+  <div id="approvedGallery" class="grid grid-cols-1 sm:grid-cols-2 gap-6"></div>
+</section>
+
+<!-- Add Video -->
 <section class="py-16 px-6 bg-white border-t border-gray-200">
   <div class="max-w-2xl mx-auto">
     <h2 class="text-2xl md:text-3xl font-bold text-blue-900 mb-6 text-center">הוספת סרטון חדש</h2>
-    <form class="bg-gray-50 p-6 rounded-xl shadow space-y-4" id="videoForm">
-      <input class="w-full p-3 border rounded-lg" id="videoTitle" name="title" placeholder="כותרת הסרטון" required type="text"/>
-      <input class="w-full p-3 border rounded-lg" id="videoId" name="youtubeId" placeholder="מזהה YouTube (למשל dQw4w9WgXcQ)" required type="text"/>
-      <select class="w-full p-3 border rounded-lg" id="videoSection" name="section" required>
+    <form id="videoForm" class="bg-gray-50 p-6 rounded-xl shadow space-y-4">
+      <input type="text" id="videoTitle" name="title" placeholder="כותרת הסרטון" required class="w-full p-3 border rounded-lg" />
+      <input type="text" id="videoId" name="youtubeId" placeholder="מזהה YouTube (למשל dQw4w9WgXcQ)" required class="w-full p-3 border rounded-lg" />
+      <select id="videoSection" name="section" required class="w-full p-3 border rounded-lg">
         <option value="">בחר קטגוריה</option>
         <option value="ephraim">🎥 סרטונים של אפרים</option>
         <option value="songs">🎵 שירים</option>
         <option value="hespedim">🕯️ הספדים</option>
       </select>
-      <button class="w-full bg-blue-900 text-white py-3 rounded-lg hover:bg-blue-800 transition" type="submit">שמור סרטון</button>
-      <p class="text-green-600 text-center mt-4 hidden" id="videoResponse">הסרטון נשמר בהצלחה</p>
+      <button type="submit" class="w-full bg-blue-900 text-white py-3 rounded-lg hover:bg-blue-800 transition">שמור סרטון</button>
+      <p id="videoResponse" class="text-green-600 text-center mt-4 hidden">הסרטון נשמר בהצלחה</p>
     </form>
   </div>
 </section>
+
+<!-- Approved Videos -->
 <section class="py-10 px-6 bg-white border-t border-gray-100">
   <div class="max-w-3xl mx-auto">
     <h2 class="text-xl font-bold text-gray-800 mb-6 text-center">סרטונים שאושרו</h2>
     <div id="videoList" class="space-y-6"></div>
   </div>
 </section>
+
 
 
 </div>
