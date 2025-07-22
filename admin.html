@@ -65,9 +65,6 @@
   <div id="approvedList" class="space-y-6"></div>
 </section>
 
-<!-- Separator from approved memories -->
-<hr class="my-12 border-t border-gray-300">
-
 <!-- Static Gallery Image Slots -->
 <section class="py-16 px-6 bg-white border-t border-gray-200">
   <div class="max-w-6xl mx-auto">
@@ -81,7 +78,9 @@
     const container = document.getElementById('staticGallerySlots');
     container.innerHTML = '';
 
-    const res = await fetch('https://efraimemorial-production.up.railway.app/gallery.json');
+    const res = await fetch('https://efraimemorial-production.up.railway.app/api/gallery/approved', {
+      credentials: 'include'
+    });
     const data = await res.json();
 
     for (let i = 0; i < 6; i++) {
@@ -137,17 +136,6 @@
 </script>
 
 
-
-<!-- Gallery Images -->
-<section>
-  <h2 class="text-xl font-semibold text-gray-700 mb-4">תמונות ממתינות לאישור</h2>
-  <div id="pendingGallery" class="grid grid-cols-1 sm:grid-cols-2 gap-6"></div>
-</section>
-
-<section>
-  <h2 class="text-xl font-semibold text-gray-700 mt-12 mb-4">תמונות מאושרות בגלריה</h2>
-  <div id="approvedGallery" class="grid grid-cols-1 sm:grid-cols-2 gap-6"></div>
-</section>
 
 <!-- Add Video -->
 <section class="py-16 px-6 bg-white border-t border-gray-200">
