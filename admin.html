@@ -81,62 +81,31 @@
     const container = document.getElementById('staticGallerySlots');
     container.innerHTML = '';
 
-    const res = await fetch('https://efraimemorial-production.up.railway.app/api/gallery/approved', {
-      credentials: 'include'
-    });
-    const data = await res.json();
+    const res = await fetch('https://efraimemorial-production.up.railway.app/api/static-gallery');
+    const images = await res.json();
 
-    for (let i = 0; i < 6; i++) {
-      const slot = data[i] || { url: `/static-gallery/img${i+1}.jpg`, caption: '', uploader: '' };
+    for (let i = 0; i < images.length; i++) {
+      const img = images[i];
 
       const div = document.createElement('div');
       div.className = 'bg-gray-50 p-4 rounded-xl shadow space-y-4';
 
       div.innerHTML = `
-        <img src="${slot.url}" alt="תמונה ${i + 1}" class="w-full h-48 object-cover rounded">
-        <p class="text-sm text-gray-600">כיתוב: ${slot.caption || '---'}<br>משלח: ${slot.uploader || '---'}</p>
-        <form class="replace-form space-y-2" data-slot="${i + 1}" enctype="multipart/form-data">
-          <input type="file" name="image" accept="image/*" required class="w-full p-2 border rounded">
-          <input type="text" name="caption" placeholder="כיתוב חדש (לא חובה)" class="w-full p-2 border rounded">
-          <input type="text" name="uploader" placeholder="שמך (המשלח)" class="w-full p-2 border rounded">
-          <button type="submit" class="w-full bg-blue-900 text-white py-2 rounded hover:bg-blue-800 transition">החלף תמונה</button>
-        </form>
-        <p class="upload-status text-center text-sm text-green-600 hidden">✔️ התמונה עודכנה</p>
+        <img src="${img.url}" alt="תמונה ${i + 1}" class="w-full h-48 object-cover rounded">
       `;
 
       container.appendChild(div);
     }
 
-    document.querySelectorAll('.replace-form').forEach(form => {
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const slot = form.dataset.slot;
-        const formData = new FormData(form);
-        const status = form.nextElementSibling;
-
-        status.classList.add('hidden');
-
-        const res = await fetch(`https://efraimemorial-production.up.railway.app/api/static-gallery/${slot}`, {
-          method: 'POST',
-          body: formData,
-          credentials: 'include'
-        });
-
-        if (res.ok) {
-          status.classList.remove('hidden');
-          loadStaticGallerySlots(); // reload updated image
-        } else {
-          status.textContent = 'שגיאה בהעלאה';
-          status.classList.remove('text-green-600');
-          status.classList.add('text-red-600');
-          status.classList.remove('hidden');
-        }
-      });
-    });
+    // Optional: if no images, show a message
+    if (images.length === 0) {
+      container.innerHTML = '<p class="text-center text-gray-600">אין עדיין תמונות בגלריה</p>';
+    }
   }
 
   window.addEventListener('DOMContentLoaded', loadStaticGallerySlots);
 </script>
+
 
 
 
