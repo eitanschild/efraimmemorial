@@ -85,13 +85,13 @@
     const data = await res.json();
 
     for (let i = 0; i < 6; i++) {
-      const slot = data[i] || { url: `/static-gallery/img${i+1}.jpg`, caption: '', uploader: '' };
+      const slot = data[i] || { filename: `img${i+1}.jpg`, caption: '', uploader: '' };
 
       const div = document.createElement('div');
       div.className = 'bg-gray-50 p-4 rounded-xl shadow space-y-4';
 
       div.innerHTML = `
-        <img src="${slot.url}" alt="תמונה ${i + 1}" class="w-full h-48 object-cover rounded">
+        <img src="https://efraimemorial-production.up.railway.app/static-gallery/${slot.filename}" alt="תמונה ${i + 1}" class="w-full h-48 object-cover rounded">
         <p class="text-sm text-gray-600">כיתוב: ${slot.caption || '---'}<br>משלח: ${slot.uploader || '---'}</p>
         <form class="replace-form space-y-2" data-slot="${i + 1}" enctype="multipart/form-data">
           <input type="file" name="image" accept="image/*" required class="w-full p-2 border rounded">
