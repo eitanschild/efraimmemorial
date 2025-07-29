@@ -263,8 +263,7 @@ app.delete('/api/videos/:id', async (req, res) => {
 });
 
 app.use('/static-gallery', express.static(path.join(__dirname, 'static-gallery')));
-const fs = require('fs');
-const path = require('path');
+
 
 const staticGalleryPath = path.join(__dirname, 'static-gallery');
 const staticUpload = multer({ dest: staticGalleryPath, limits: { fileSize: 15 * 1024 * 1024 } }); // 15 MB limit
