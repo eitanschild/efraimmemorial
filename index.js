@@ -282,7 +282,8 @@ app.post('/api/static-gallery/:index', staticUpload.single('image'), async (req,
   }
 
   const ext = path.extname(req.file.originalname);
-  const finalName = `img${index}${ext}`;
+  const timestamp = Date.now();
+  const finalName = `img${index}-${timestamp}${ext}`;  
   const finalPath = path.join(staticGalleryPath, finalName);
 
   console.log(`📥 Upload received for slot ${index}`);
@@ -324,7 +325,7 @@ app.get('/api/static-gallery', async (req, res) => {
   const result = await db.query('SELECT slot, caption, uploader FROM photos ORDER BY slot');
   const images = result.rows.map(row => ({
     slot: row.slot,
-    url: `/static-gallery/img${row.slot}.jpg`,
+    url: `/static-gallery/${row.filename}`,
     caption: row.caption,
     uploader: row.uploader
   }));
