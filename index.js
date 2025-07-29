@@ -9,26 +9,15 @@ const db = require('./db');
 
 
 app.use(cors({
-  origin: function (origin, callback) {
-    const allowedOrigins = [
-      'https://www.ephraimjackman.com',
-      'https://efraimmemorial-frontend.vercel.app',
-      'http://localhost:3000',
-      'https://efraimemorial-production.up.railway.app'  // ✅ this was missing
-    ];
-
-    
-
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      console.warn('❌ Blocked by CORS:', origin);
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: [
+    'https://www.ephraimjackman.com',
+    'https://efraimmemorial-frontend.vercel.app',
+    'http://localhost:3000',
+    'https://efraimemorial-production.up.railway.app'
+  ],
   credentials: true,
   methods: ['GET', 'POST', 'DELETE', 'PUT', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type']
 }));
 
 
@@ -110,17 +99,20 @@ app.post('/api/memories/delete/:id', async (req, res) => {
 
 
 app.set('trust proxy', 1); // trust Railway's proxy
+const session = require('express-session');
+const isProduction = process.env.NODE_ENV === 'production';
+
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'keyboard-cat',
+  secret: process.env.SESSION_SECRET || 'supersecret',
   resave: false,
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    secure: false,           // must be true in production
-    sameSite: 'Lax',       // needed for cross-site cookie
-    maxAge: 1000 * 60 * 60
+    secure: isProduction, // ✅ only true in production
+    sameSite: isProduction ? 'None' : 'Lax' // ✅ allows mobile cookies in dev
   }
 }));
+
 
 
 
