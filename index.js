@@ -322,10 +322,10 @@ app.use('/static-gallery', express.static(staticGalleryPath));
 
 // List all uploaded images
 app.get('/api/static-gallery', async (req, res) => {
-  const result = await db.query('SELECT slot, caption, uploader FROM photos ORDER BY slot');
+  const result = await db.query('SELECT slot, filename, caption, uploader FROM photos ORDER BY slot');
   const images = result.rows.map(row => ({
     slot: row.slot,
-    url: `/static-gallery/${row.filename}`,
+    filename: row.filename, // 🔥 this line is CRUCIAL
     caption: row.caption,
     uploader: row.uploader
   }));
