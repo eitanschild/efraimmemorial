@@ -264,78 +264,75 @@ app.delete('/api/videos/:id', async (req, res) => {
 
 app.use('/static-gallery', express.static(path.join(__dirname, 'static-gallery')));
 
-
+const multer = require('multer');
+const fs = require('fs');
+const path = require('path');
 
 const staticGalleryPath = path.join(__dirname, 'static-gallery');
-const staticStorage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, staticGalleryPath),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    const base = path.basename(file.originalname, ext);
-    const timestamp = Date.now();
-    cb(null, `${base}-${timestamp}${ext}`);
-  }
-});
-const staticUpload = multer({ storage: staticStorage, limits: { fileSize: 5 * 1024 * 1024 } });
+const staticUpload = multer({ dest: staticGalleryPath, limits: { fileSize: 15 * 1024 * 1024 } }); // 15 MB limit
 
-
-app.post('/api/static-gallery/:index', staticUpload.single('image'), (req, res) => {
+app.post('/api/static-gallery/:index', staticUpload.single('image'), async (req, res) => {
   if (!req.session || !req.session.admin) {
+    console.warn('⛔ Unauthorized upload attempt');
     return res.status(403).json({ error: 'Unauthorized' });
   }
 
   const index = parseInt(req.params.index, 10);
   if (isNaN(index) || index < 1 || index > 6) {
+    console.warn('⚠️ Invalid slot index:', index);
     return res.status(400).json({ error: 'Invalid image index (must be 1–6)' });
   }
 
-  const caption = req.body.caption || '';
-  const uploader = req.body.uploader || '';
-  const tempPath = req.file.path;
-  const finalName = `img${index}.jpg`;
-  const targetPath = path.join(staticGalleryPath, finalName);
+  const ext = path.extname(req.file.originalname);
+  const finalName = `img${index}${ext}`;
+  const finalPath = path.join(staticGalleryPath, finalName);
 
-  fs.rename(tempPath, targetPath, (err) => {
+  console.log(`📥 Upload received for slot ${index}`);
+  console.log(`🧾 Saving image as: ${finalName}`);
+
+  fs.rename(req.file.path, finalPath, async (err) => {
     if (err) {
-      console.error('❌ Failed to move image:', err);
+      console.error('❌ Failed to move image to static-gallery:', err);
       return res.status(500).json({ error: 'Failed to save image' });
     }
 
-    // ✅ Update gallery.json
-    const galleryJsonPath = path.join(__dirname, 'gallery.json');
-    let gallery = [];
+    const caption = req.body.caption || '';
+    const uploader = req.body.uploader || '';
 
-    if (fs.existsSync(galleryJsonPath)) {
-      gallery = JSON.parse(fs.readFileSync(galleryJsonPath, 'utf-8'));
+    console.log(`📝 Writing to DB: slot ${index}, caption="${caption}", uploader="${uploader}"`);
+
+    try {
+      await db.query(
+        'UPDATE photos SET filename = $1, caption = $2, uploader = $3 WHERE slot = $4',
+        [finalName, caption, uploader, index]
+      );
+      console.log(`✅ DB updated for slot ${index}`);
+      res.status(200).json({ success: true });
+    } catch (dbErr) {
+      console.error('❌ DB update error:', dbErr);
+      res.status(500).json({ error: 'Failed to update database' });
     }
-
-    gallery[index - 1] = {
-      url: `/static-gallery/${finalName}`,
-      caption,
-      uploader
-    };
-
-    fs.writeFileSync(galleryJsonPath, JSON.stringify(gallery, null, 2));
-    res.status(200).json({ success: true });
   });
 });
+
+
 
 // Serve static images
 app.use('/static-gallery', express.static(staticGalleryPath));
 
 
 // List all uploaded images
-app.get('/api/static-gallery', (req, res) => {
-  fs.readdir(staticGalleryPath, (err, files) => {
-    if (err) return res.status(500).json({ error: 'Failed to read directory' });
-
-    const urls = files.map(name => ({
-      filename: name,
-      url: `/static-gallery/${name}`
-    }));
-    res.json(urls);
-  });
+app.get('/api/static-gallery', async (req, res) => {
+  const result = await db.query('SELECT slot, caption, uploader FROM photos ORDER BY slot');
+  const images = result.rows.map(row => ({
+    slot: row.slot,
+    url: `/static-gallery/img${row.slot}.jpg`,
+    caption: row.caption,
+    uploader: row.uploader
+  }));
+  res.json(images);
 });
+
 
 // Delete image
 app.delete('/api/static-gallery/:filename', (req, res) => {
