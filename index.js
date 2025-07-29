@@ -263,8 +263,6 @@ app.delete('/api/videos/:id', async (req, res) => {
 });
 
 app.use('/static-gallery', express.static(path.join(__dirname, 'static-gallery')));
-
-const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
 
