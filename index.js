@@ -116,8 +116,8 @@ app.use(session({
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    secure: true,           // must be true in production
-    sameSite: 'None',       // needed for cross-site cookie
+    secure: false,           // must be true in production
+    sameSite: 'Lax',       // needed for cross-site cookie
     maxAge: 1000 * 60 * 60
   }
 }));
