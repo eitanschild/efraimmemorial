@@ -9,15 +9,26 @@ const db = require('./db');
 
 
 app.use(cors({
-  origin: [
-    'https://www.ephraimjackman.com',
-    'https://efraimmemorial-frontend.vercel.app',
-    'http://localhost:3000',
-    'https://efraimemorial-production.up.railway.app'
-  ],
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      'https://www.ephraimjackman.com',
+      'https://efraimmemorial-frontend.vercel.app',
+      'http://localhost:3000',
+      'https://efraimemorial-production.up.railway.app'  // ✅ this was missing
+    ];
+
+    
+
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.warn('❌ Blocked by CORS:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'DELETE', 'PUT', 'OPTIONS'],
-  allowedHeaders: ['Content-Type']
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 
@@ -99,7 +110,6 @@ app.post('/api/memories/delete/:id', async (req, res) => {
 
 
 app.set('trust proxy', 1); // trust Railway's proxy
-const session = require('express-session');
 const isProduction = process.env.NODE_ENV === 'production';
 
 app.use(session({
