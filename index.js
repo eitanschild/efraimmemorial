@@ -127,7 +127,7 @@ app.use(session({
 // Get all articles
 app.get('/api/articles', async (req, res) => {
   try {
-    const result = await db.query('SELECT * FROM articles ORDER BY id DESC');
+    const result = await pool.query(('SELECT * FROM articles ORDER BY id DESC');
     res.json(result.rows);
   } catch (err) {
     console.error('Error fetching articles:', err);
@@ -141,7 +141,7 @@ app.post('/api/articles', async (req, res) => {
   if (!title || !url) return res.status(400).json({ error: 'Missing title or URL' });
 
   try {
-    await db.query('INSERT INTO articles (title, url) VALUES ($1, $2)', [title, url]);
+    await pool.query(('INSERT INTO articles (title, url) VALUES ($1, $2)', [title, url]);
     res.sendStatus(200);
   } catch (err) {
     console.error('Error adding article:', err);
@@ -153,7 +153,7 @@ app.post('/api/articles', async (req, res) => {
 app.delete('/api/articles/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    await db.query('DELETE FROM articles WHERE id = $1', [id]);
+    await pool.query(('DELETE FROM articles WHERE id = $1', [id]);
     res.sendStatus(200);
   } catch (err) {
     console.error('Error deleting article:', err);
@@ -339,7 +339,7 @@ app.post('/api/static-gallery/:index', staticUpload.single('image'), async (req,
     console.log(`📝 Writing to DB: slot ${index}, caption="${caption}", uploader="${uploader}"`);
 
     try {
-      await db.query(
+      await pool.query((
         'UPDATE photos SET filename = $1, caption = $2, uploader = $3 WHERE slot = $4',
         [finalName, caption, uploader, index]
       );
@@ -360,7 +360,7 @@ app.use('/static-gallery', express.static(staticGalleryPath));
 
 // List all uploaded images
 app.get('/api/static-gallery', async (req, res) => {
-  const result = await db.query('SELECT slot, filename, caption, uploader FROM photos ORDER BY slot');
+  const result = await pool.query(('SELECT slot, filename, caption, uploader FROM photos ORDER BY slot');
   const images = result.rows.map(row => ({
     slot: row.slot,
     filename: row.filename, // 🔥 this line is CRUCIAL
