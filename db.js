@@ -18,3 +18,8 @@ pool.query('SELECT NOW()').then(res => {
 });
 
 module.exports = pool;
+await db.query(
+    'UPDATE photos SET filename = $1, caption = $2, uploader = $3 WHERE slot = $4',
+    [finalName, caption, uploader, index]
+  );
+  

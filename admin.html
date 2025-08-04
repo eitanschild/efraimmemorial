@@ -388,6 +388,76 @@ async function deleteApproved(id) {
   window.addEventListener('DOMContentLoaded', loadApprovedVideos);
 </script>
 
+
+<!--articles section-->
+<section class="bg-white p-6 mt-10 rounded-xl shadow max-w-3xl mx-auto">
+  <h2 class="text-2xl font-bold text-blue-900 mb-4">כתבות על אפרים</h2>
+  <form id="articleForm" class="space-y-4 mb-6">
+    <input type="text" name="title" placeholder="כותרת הכתבה" required class="w-full p-2 border rounded" />
+    <input type="url" name="url" placeholder="קישור לכתבה" required class="w-full p-2 border rounded" />
+    <button type="submit" class="w-full bg-blue-900 text-white py-2 rounded hover:bg-blue-800">הוסף כתבה</button>
+  </form>
+
+  <table class="w-full text-right border-collapse">
+    <thead>
+      <tr class="bg-gray-100">
+        <th class="border p-2">#</th>
+        <th class="border p-2">כותרת</th>
+        <th class="border p-2">קישור</th>
+        <th class="border p-2">מחק</th>
+      </tr>
+    </thead>
+    <tbody id="articlesTable"></tbody>
+  </table>
+</section>
+
+<script>
+  async function loadArticles() {
+    const res = await fetch('https://efraimemorial-production.up.railway.app/api/articles', { credentials: 'include' });
+    const articles = await res.json();
+    const table = document.getElementById('articlesTable');
+    table.innerHTML = '';
+    articles.forEach((article, i) => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td class="border p-2">${i + 1}</td>
+        <td class="border p-2">${article.title}</td>
+        <td class="border p-2"><a href="${article.url}" class="text-blue-600 underline" target="_blank">לכתבה</a></td>
+        <td class="border p-2">
+          <button onclick="deleteArticle(${article.id})" class="text-red-600 hover:underline">מחק</button>
+        </td>
+      `;
+      table.appendChild(row);
+    });
+  }
+
+  async function deleteArticle(id) {
+    if (!confirm('האם אתה בטוח שברצונך למחוק את הכתבה?')) return;
+    await fetch(`https://efraimemorial-production.up.railway.app/api/articles/${id}`, {
+      method: 'DELETE',
+      credentials: 'include'
+    });
+    loadArticles();
+  }
+
+  document.getElementById('articleForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const title = e.target.title.value;
+    const url = e.target.url.value;
+    await fetch('https://efraimemorial-production.up.railway.app/api/articles', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ title, url })
+    });
+    e.target.reset();
+    loadArticles();
+  });
+
+  loadArticles();
+</script>
+
+
   <script>
     async function loadAllKtavim() {
       try {

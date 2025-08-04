@@ -124,6 +124,42 @@ app.use(session({
 }));
 
 
+// Get all articles
+app.get('/api/articles', async (req, res) => {
+  try {
+    const result = await db.query('SELECT * FROM articles ORDER BY id DESC');
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching articles:', err);
+    res.status(500).json({ error: 'Failed to fetch articles' });
+  }
+});
+
+// Add new article
+app.post('/api/articles', async (req, res) => {
+  const { title, url } = req.body;
+  if (!title || !url) return res.status(400).json({ error: 'Missing title or URL' });
+
+  try {
+    await db.query('INSERT INTO articles (title, url) VALUES ($1, $2)', [title, url]);
+    res.sendStatus(200);
+  } catch (err) {
+    console.error('Error adding article:', err);
+    res.status(500).json({ error: 'Failed to add article' });
+  }
+});
+
+// Delete article
+app.delete('/api/articles/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    await db.query('DELETE FROM articles WHERE id = $1', [id]);
+    res.sendStatus(200);
+  } catch (err) {
+    console.error('Error deleting article:', err);
+    res.status(500).json({ error: 'Failed to delete article' });
+  }
+});
 
 
 
